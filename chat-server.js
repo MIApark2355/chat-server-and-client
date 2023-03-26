@@ -50,11 +50,11 @@ class User {
     
   }
 //[chat roooms]
-class Chatroom{
-constructor(room_name, room_id, creator, password) {
+class Room{
+constructor(room_name, creator, room_type, password) {
     this.room_name = room_name;
-    this.room_id = room_id;
     this.creator = creator;
+    this.room_type = room_type
     this.password = password;
     this.members = [];
     this.banned = [];
@@ -72,42 +72,140 @@ class Message{
 }
 
 let users_lst = [];
-let rooms_list = [];
+let rooms_lst = [];
 
 
 
 io.sockets.on("connection", function (socket) {
-    console.log("connected");
+
+    //////////////////////USERS STUFF////////////////////////
+    //console.log("connected");
     //received new user
   socket.on('new_user', function(data) {
+
+    console.log("new_user information received from client ",data);
     //check if a new username is available
-    let user;
-    for(let i=0; i<users_lst.length; i++) {
-      user = users_lst[i];
-      if(user.username == data.username) {
-        // console.log(cur.id);
-        if(user.user_id == null) {
-          user.user_id = data.user_id;
-          // console.log(cur.id);
-          io.in(data.user_id).emit('new_user', {new_user:user, users_lst:users_lst, chatrooms:chatrooms });
-        }
-        else {
-          io.in(data.user_id).emit("error", {message:"The username is already taken"});
-        }
+    let check_username = data["username"];
+    let check_user_id = data["user_id"];
+    if(check_username === ""){
+        io.in(check_user_id).emit("error", {message:"Username cannot be empty string"});
         return;
-      }
+    }
+    let already_exist = false;
+    for(let i = 0; i < users_lst.length ; i++){
+        //console.log(users_lst[i].username);
+        if (users_lst[i].username === check_username){
+            already_exist = true;
+            break;
+        }
+    }
+    console.log("new_user valid? ", !(already_exist));
+    if(already_exist){
+        //sending error to curr user
+        io.in(check_user_id).emit("error", {message:"The username is already taken"});
+        return;
     }
 
-    var new_user = new User(data.username, data.id);
-    users.push(new_user);
-    io.sockets.emit('new_user', {new_user:new_user, users:users, chatrooms:chatrooms});
+    let new_user = new User(check_username, check_user_id);
+    users_lst.push(new_user);
+    console.log("users list updated",users_lst);
+    //io.in(check_user_id).emit('new_user', {username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
+    io.sockets.emit('new_user',{username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
   });
 
+  socket.on('remove_user', function(data) {
+    let to_be_removed = data.username;
+    let to_be_removed_id = data.user_id;
 
-    // This callback runs when a new Socket.IO connection is established.
+    //first we need to remove all the chat rooms that to-be-removed user has made
+    for (let j = 0 ; j < rooms_lst.length; j++){
+        if(rooms_lst[j].creator === to_be_removed){
+            rooms_lst.splice(j,1);
+        }
+    }
 
-     //when a user connects
-    socket.broadcast.emit('messgae',"A user has joined the room");
+
+    for(let i = 0; i < users_lst.length ; i++){
+        if (users_lst[i].username === to_be_removed){
+            users_lst.splice(i,1);
+            break;
+        }
+    }
+    console.log("users list after removed",users_lst);
+    io.in(to_be_removed_id).emit('remove_user', {username:to_be_removed,user_id:to_be_removed_id,users_lst:users_lst,rooms_lst:rooms_lst});
+  });
+
+    //////////////////////ROOM STUFF////////////////////////
+
+    socket.on('create_room', function(data) {
+
+        console.log("new ROOM information received from client ",data);
+        //check if a new room name is available
+        let check_name = data["room_name"];
+        let check_user_id = data["creator_id"]
+        if(check_name === ""){
+            io.in(check_user_id).emit("error", {message:"room name cannot be empty string"});
+            return;
+        }
+        let already_exist = false;
+        for(let i = 0; i < rooms_lst.length ; i++){
+            if (rooms_lst[i].room_name === check_name){
+                already_exist = true;
+                break;
+            }
+        }
+        console.log("new room name valid? ", !(already_exist));
+        if(already_exist){
+            //sending error to curr user
+            io.in(check_user_id).emit("error", {message:"The room name is already exists"});
+            return;
+        }
+
+        let roomType = data["room_type"];
+        let pw = null;
+        if(roomType === "private"){
+            pw = data["password"];
+        }
+        let new_room = new Room(check_name, data["creator"], roomType, pw);
+        rooms_lst.push(new_room);
+        console.log("rooms list updated",rooms_lst);
+        io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
+      });
+
+      
+
+    //could be creative portion --> creator can also remove a chat room
+    socket.on('remove_room', function(data) {
+        let to_be_removed = data["room_name"];
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === to_be_removed){
+                rooms_lst.splice(j,1);
+            }
+        }
+        console.log("room list after removed",rooms_lst);
+        io.sockets.emit('remove_room', {rooms_lst:rooms_lst});
+      });
+
+
+      socket.on('join_room', function(data) {
+        let check_room = data["room_name"];
+        let joining_user = data["username"];
+        let is_creator = false;
+        let room_num = -1;
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === check_room){
+                room_num = j;
+                if(rooms_lst[j].creator === joining_user){
+                    console.log("You are creator");
+                    is_creator =true;
+                }
+                rooms_lst[j].members.push(joining_user);
+            }
+        }
+        console.log("room list after a member joined",rooms_lst);
+        io.sockets.emit('join_room', {rooms_lst:rooms_lst, is_creator:is_creator ,room_index:room_num});
+      });
+
 
 
     //when a user disconnects

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
@@ -11,48 +10,55 @@
 <body>
     <div class="header">
         <h1>Chat Room</h1>
-        <button type="submit" class="leave_btn" id="leave_btn">Leave room</button>
-        
+        <button type="submit" class="logout_btn in" id="logout_btn">Log out</button>
+        <button type="submit" class="leave_btn not_creator" id="leave_btn">Leave room</button>
+        <button type="submit" class="delete_btn is_creator" id="delete_btn">Delete room</button>
     </div>
         
     <div class="container">
         <div class="left">
-            <div class="user" id="showUser"></div>
-            <div class="join_container">
-              <div class="join_main">
-                <form>
-                  <div class="username_input_container">
-                    <label for="username">Username</label>
-                    <input
-                      type="text"
-                      name="username"
-                      id="username"
-                      placeholder="Enter username"
-                    />
-                  </div>
-                  <div class="form-control">
-                    <label for="room">Choose a Room</label>
-                    <select name="room" id="room">
-                      <option value="room1">room1</option>
-                      <option value="room2">room2</option>
-                    </select>
-                  </div>
-                  <button type="submit" class="join_btn">Join Chat</button>
-                </form>
-                    
-              </div>
-            
+          <div class="username_container"><div class="in"><div class="showUser" id="showUser">Your username is </div></div>
+          <div class="out"><div class="username_input_container">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              name="username"
+              id="new_user"
+              placeholder="Enter username"
+            />
+            <button type="submit" id="login_btn" class="login_btn">Log in</button>
+          </div>
         </div>
-        <div class="users_lst">
+      </div>
+          
+          
+            
+        <div class="users_lst after_join" id="users_lst">
           <label>Current Users</label>
-          <div class="user">user1</div>
-          <div class="user">user2</div>
+          <div class="user">
+            <div class="user_container">
+              <p>user1</p>
+              <div class="two_btn is_creator">
+                <button class="kick_btn" id="kick_btn">Kick</button>
+                <button class="ban_btn" id="ban_btn">Ban</button>
+              </div>
+            </div>
+          </div>
+          <div class="user">
+            <div class="user_container">
+              <p>user2</p>
+              <div class="two_btn">
+                <button class="kick_btn" id="kick_btn">Kick</button>
+                <button class="ban_btn" id="ban_btn" >Ban</button>
+              </div>
+            </div>
+          </div>
         </div>
         </div>
 
-        <div class="middle">
+        <div class="middle in">
             
-            <div class="chat_box">
+            <div class="chat_box after_join">
               <h3 class="curr_room" id="curr_room">room1</h3>
               <div id="chat_log" class="chat_log">
                 <div class="message">
@@ -63,49 +69,68 @@
                 </div>
               </div>
             </div>
-              <div class="message_input_container">
+              <div class="message_input_container after_join">
                 <input type="text" class="message_input" id="message_input"/>
-              <button class ="send_message" id ="send_message">send</button>
+              <button class ="send_btn" id ="send_btn">send</button>
               </div>
                 
             
             
         </div>
         
-        <div class="right">
+        <div class="right in">
+          
+          <div class="join_container">
+            <div class="join_main">
+              <form>
+                
+                <div class="form-control">
+                  <label>Choose a Room</label>
+                  <select name="room_names" id="room_names">
+                  </select>
+                </div>
+                <button class="join_btn" id="join_btn">Join Chat</button>
+              </form>
+                  
+            </div>
+          
+      </div>
             <div class="create_room_container">
               <form>
                 <div class="rooms" id="rooms">
                     <h3>Create a new chat room</h3>
                     <div class="room_name_container">
-                      <label>Name: </label><input type="text" placeholder="create a new room" class="new_room" id="new_room"/>
+                      <p>Name </p><input type="text" placeholder="create a new room" class="new_room" id="new_room"/>
                     </div>
                     
                     <div class="radio">
                         <label>Type   </label>
                         <input type="radio" name="room_type" class="room_type" id="public" value="public">public
                         <input type="radio" name="room_type" class="room_type" id="private" value="private">private
-                        <div class="pw_container" id="pw_container"><p>password :   </p> <input type="password" name="private_pw" class="private_pw" id="private_pw" placeholder="Enter a password"></div>
+                        <div class="pw_container" id="pw_container"><p>password  </p> <input type="password" name="private_pw" class="private_pw" id="private_pw" placeholder="Enter a password"></div>
                     </div>
                  </div> 
             </form>
             <div class="create_btn_container">
-                <button class="create_btn">Create</button>
+                <button class="create_btn" id="create_btn">Create</button>
             </div>
             </div>
           </div>
         </div>
         
     <script type ="text/javascript">
-      let curr_room_id;
-      let curr_user="sia";
+      let joined_room_name;
+      let curr_user="";
       let is_creator = false;
 
 
-      const showUser = document.getElementById("showUser");
-
   //default
   $('.pw_container').hide();
+  $(".in").hide();
+  $(".after_join").hide();
+  $(".out").show();
+  $(".is_creator").hide();
+  $(".not_creator").hide();
 
   //if you click private for a room type, an input box for private room pw will show up
    //if you click public for a room type, an input box for private room pw will dissapear
@@ -126,8 +151,32 @@
   //chat-log
   const chat_msge = document.querySelector('.chat_log');
 
-  //send_button
-  const send_msg = document.getElementById('send_message');
+  //message send_button
+  const send_msg = document.getElementById('send_btn');
+
+  //login button
+  const login = document.getElementById('login_btn');
+
+  const logout = document.getElementById('logout_btn');
+
+  //join button
+  const join_btn = document.querySelector('.join_btn');
+
+
+
+  const show_room_lst = document.getElementById("room_names");
+
+  //leave button
+  const leave = document.getElementById('leave_btn');
+
+  //delete room button
+  const delete_room = document.getElementById('delete_btn');
+
+  //create button
+  const create = document.getElementById('create_btn');
+
+  const showUser = document.getElementById("showUser");
+
 
   //curr_room_name
   const curr_room_name = document.getElementById('curr_room');
@@ -137,27 +186,71 @@
 
   /////////////////////////////USER STUFF////////////////////////////
 
+//get username from DOM and emit to server
+function get_user(e){
+  let new_user = document.getElementById('new_user').value;
+  let user_id = socketio.id;
+
+  console.log("new_user is ",new_user," and ID is" , user_id);
+  socketio.emit("new_user", {username:new_user, user_id:user_id});
+
+  //clearing username input box
+  document.getElementById('new_user').value="";
+}
+login.addEventListener("click", get_user, false);
+
   //receiving a new_user from server
   //this new user will be a current user
   socketio.on("new_user", function(data) {
-      if(curr_user==null && data.new_user != null && data.new_user.user_id == socketio.user_id) {
-        curr_user = data.new_user;
-        showUser.innerHTML = "username: " + curr_user.username;
-        let rooms = data.chatrooms
-        for(let i = 0; i<rooms.length; i++) {
-          addRoom(rooms[i]);
-        }
+    console.log("users list received from server ",data);
+      if(curr_user==="" && data.username !== null && data.user_id === socketio.id) {
+        curr_user = data.username;
+        showUser.innerHTML = `<strong>${curr_user}</strong>`;
+        // let rooms = data.chatrooms
+        // for(let i = 0; i<rooms.length; i++) {
+        //   add_room(rooms[i]);
+        // }
+        console.log("successfully logged in!");
+        console.log("This is room options: ", data["rooms_lst"]);
+        let room_array = data["rooms_lst"];
+        let str ="";
+        for(let j = 0; j<room_array.length; j++) {
+        str += `<option value=${room_array[j].room_name}>${room_array[j].room_name}</option>`;
+        } 
+        show_room_lst.innerHTML += str;
+
+        $(".in").show();
+        $(".out").hide();
+        
+
       }
-      var display_users = document.getElementById("usernames");
-      display_users.innerHTML = ""
-      for(var k = 0; k<data.users.length; k++) {
-        display_users.innerHTML += "" + data.users[k].username + "<br>";
-      }
+      
+      $(".is_creator").hide();
   });
 
+  //from DOM and emit to server (username that should be removed from the users list)
+function remove_user(e){
+
+  console.log("current user(",curr_user,") will be removed");
+  socketio.emit("remove_user", {username:curr_user ,user_id:socketio.id});
+
+}
+logout.addEventListener("click", remove_user, false);
+
+socketio.on('remove_user', data=>{
+      console.log("removed from server ");
+
+      //reset the current user to be empty string
+      curr_user="";
+      $('.pw_container').hide();
+      $(".in").hide();
+      $(".after_join").hide();
+      $(".out").show();
+      $(".is_creator").hide();
+  })
   ///////////////////////////////CHAT ROOM STUFF/////////////////////
 
-  function create_rooom(){
+  function create_room(){
       const room_name = room_name_input.value;
       const radio1 = document.getElementById("public");
       const radio2 = document.getElementById("private");
@@ -166,47 +259,111 @@
       // console.log(radio1.checked);
       // console.log(radio2.checked);
       // console.log(radio2.value);
-      if (roomName === "") {
+      if (room_name === "") {
         alert("Please fill the input field");
         return;
       }else if(radio1.checked !== true && radio2.checked !==true){
-          alert("Please check a type of a chat room");
+        alert("Please check a type of a chat room");
         return;
       }else if(radio2.checked && document.getElementById("private_pw").value === ""){
-          alert("Password is missing");
+        alert("Password is missing");
         return;
       }
 
 
       if(document.getElementById('public').checked) {
           roomType = document.getElementById('public').value;
+          socketio.emit("create_room", {room_name:room_name, creator:curr_user, creator_id:socketio.id,room_type:roomType});
         }else if(document.getElementById('private').checked) {
           roomType = document.getElementById('private').value;
           roomPW = document.getElementById("private_pw").value;
+          socketio.emit("create_room", {room_name:room_name, creator:curr_user,  creator_id:socketio.id,room_type:roomType,password: roomPW});
         }
+        document.getElementById('new_room').value="";
+        $("#public").prop("checked", false);
+        $("#private").prop("checked", false);
         console.log(roomType);
 
-      let creator = current_user.username;
-      socketio.emit("new_chatroom_to_s", {room_name:room_name, creator:creator, password: room_pw});
-
+      //let creator = new User(curr_user, socketio.id);
+      
   }
+  create.addEventListener("click", create_room, false);
 
   //new chat room receive from server
-  socketio.on("new_chatroom_to_c", function(data) {
-      add_room_data(data.chat_room);
-      // if(data.chat_room.creator.user_id == socketio.user_id) {
-      //   clearInputs();
-      // }
+  socketio.on("create_room", function(data) {
+    console.log("ROOMs list received from server ", data);
+    let str =`<option value=${data["room"].room_name}>${data["room"].room_name}</option>`
+    show_room_lst.innerHTML += str;
   });
 
-  function add_room_data(room){
+  function remove_room(){
+    console.log("remove request sent to server");
+    socketio.emit("remove_room", {room_name:joined_room_name, creator:curr_user, creator_id:socketio.id});
   }
+  delete_room.addEventListener("click", remove_room, false);
+
+  socketio.on("remove_room", function(data) {
+    console.log("room will be deleted from the room options(using updated rooms list) ");
+    let str ="";
+      
+    for(let j = 0; j<data["rooms_lst"].length; j++) {
+      str += `<option value=${data["room"].room_name}>${data["room"].room_name}</option>`;
+    } 
+    show_room_lst.innerHTML += str;
+    is_creator = false;
+    joined_room_name ="";
+    
+  });
 
   //DOM
   function show_curr_room(room){
       curr_room_name.innerText = room;
   }
 
+
+  function join_room(){
+    const to_join = document.getElementById("room_names").value;
+    console.log("trying to join ",to_join);
+    socketio.emit("join_room", {room_name:to_join, username:curr_user,  user_id:socketio.id});
+  }
+  join_btn.addEventListener("click", join_room, false);
+
+  join_btn.addEventListener("click", e=>{
+    e.stopPropagation();
+  }, false);
+
+
+  socketio.on("join_room", function(data) {
+    console.log("user joined the room");
+    $(".after_join").show();
+    if(data["is_creator"]){
+      is_creator = true;
+      $(".is_creator").show();
+      $(".not_creator").hide();
+    }else{
+      $(".is_creator").hide();
+      $(".not_creator").show();
+    }
+
+    //show all the users in the chat room on the left side
+    let show_users = document.getElementById("users_lst");
+      let str ="";
+      let room_index = data["room_index"];
+      let room = data.rooms_lst[room_index];
+      for(let j = 0; j<room.members.length; j++) {
+        str += `<div class="user">
+            <div class="user_container">
+              <p>${room.members[j]}</p>
+              <div class="two_btn is_creator">
+                <button class="kick_btn" id="kick_btn">Kick</button>
+                <button class="ban_btn" id="ban_btn" >Ban</button>
+              </div>
+            </div>
+          </div>`;
+      }
+      show_users.innerHTML = str;
+    
+  });
 ///////////////////////MESSAGE STUFF///////////////////////////
 
   //to show on HTML (DOM)
@@ -256,6 +413,14 @@
         curr_room_id = "";
       } 
     });
+
+
+
+    //when there is an error
+    socketio.on('error', function(data) {
+      alert(data.message);
+    })
+
     </script>
 </body>
 </html>
