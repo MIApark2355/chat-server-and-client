@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Chat Room</title>
+</head>
+<body>
+    <div class="header">
+        <h1>Chat Room</h1>
+        <button type="submit" class="leave_btn">Leave room</button>
+        
+    </div>
+        
+    <div class="container">
+        <div class="left">
+            <div class="user" id="showUser"></div>
+            <div class="join_container">
+              <main class="join_main">
+                <form>
+                  <div class="username_input_container">
+                    <label for="username">Username</label>
+                    <input
+                      type="text"
+                      name="username"
+                      id="username"
+                      placeholder="Enter username"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label for="room">Room</label>
+                    <select name="room" id="room">
+                      <option value="room1">room1</option>
+                      <option value="room2">room2</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="join_btn">Join Chat</button>
+                </form>
+                    
+              </main>
+            
+        </div>
+        <div class="users_lst">
+          <label>Current users</label>
+          <div class="user">user1</div>
+          <div class="user">user2</div>
+        </div>
+        </div>
+
+        <div class="middle">
+            
+            <div class="chat_box">
+              <h3>Message</h3>
+              <div id="chat_log" class="chat_log">
+                <div class="message">
+                  <p class="name_time">Mia <span>9:12pm</span></p>
+                  <p class="text">
+                    Hi
+                  </p>
+                </div>
+              </div>
+            </div>
+              <div class="message_input_container">
+                <input type="text" class="message_input" id="message_input"/>
+              <button class ="send_message" id ="send_message">send</button>
+              </div>
+                
+            
+            
+        </div>
+        
+        <div class="right">
+            <div class="create_room_container">
+              <form>
+                <div id="rooms">
+                    <h3>Create a new chat room</h3>
+                    <label>Name   </label><input type="text" placeholder="create a new room" class="new_room" id="new_room"/>
+                    <div class="radio">
+                        <label>Type   </label>
+                        <input type="radio" name="type" class="room_type" id="public" value="public">public
+                        <input type="radio" name="type" class="room_type" id="private" value="private">private
+                        <input type="password" name="private_pw" class="private_pw" id="private_pw">
+                    </div>
+                 </div> 
+            </form>
+            <div class="create_btn_container">
+                <button class="create_btn">Create</button>
+            </div>
+            </div>
+          </div>
+        </div>
+
+    <script src="chat-client.js"></script>
+    <script src="chat-server.js"></script>
+</body>
+</html>
