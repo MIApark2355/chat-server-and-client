@@ -1,18 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="/socket.io/socket.io.js"></script>
+    
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <title>Chat Room</title>
 </head>
 <body>
     <div class="header">
         <h1>Chat Room</h1>
-        <button type="submit" class="leave_btn">Leave room</button>
+        <button type="submit" class="leave_btn" id="leave_btn">Leave room</button>
         
     </div>
         
@@ -20,7 +19,7 @@
         <div class="left">
             <div class="user" id="showUser"></div>
             <div class="join_container">
-              <main class="join_main">
+              <div class="join_main">
                 <form>
                   <div class="username_input_container">
                     <label for="username">Username</label>
@@ -32,7 +31,7 @@
                     />
                   </div>
                   <div class="form-control">
-                    <label for="room">Room</label>
+                    <label for="room">Choose a Room</label>
                     <select name="room" id="room">
                       <option value="room1">room1</option>
                       <option value="room2">room2</option>
@@ -41,11 +40,11 @@
                   <button type="submit" class="join_btn">Join Chat</button>
                 </form>
                     
-              </main>
+              </div>
             
         </div>
         <div class="users_lst">
-          <label>Current users</label>
+          <label>Current Users</label>
           <div class="user">user1</div>
           <div class="user">user2</div>
         </div>
@@ -54,7 +53,7 @@
         <div class="middle">
             
             <div class="chat_box">
-              <h3>Message</h3>
+              <h3 class="curr_room" id="curr_room">room1</h3>
               <div id="chat_log" class="chat_log">
                 <div class="message">
                   <p class="name_time">Mia <span>9:12pm</span></p>
@@ -76,14 +75,17 @@
         <div class="right">
             <div class="create_room_container">
               <form>
-                <div id="rooms">
+                <div class="rooms" id="rooms">
                     <h3>Create a new chat room</h3>
-                    <label>Name   </label><input type="text" placeholder="create a new room" class="new_room" id="new_room"/>
+                    <div class="room_name_container">
+                      <label>Name: </label><input type="text" placeholder="create a new room" class="new_room" id="new_room"/>
+                    </div>
+                    
                     <div class="radio">
                         <label>Type   </label>
-                        <input type="radio" name="type" class="room_type" id="public" value="public">public
-                        <input type="radio" name="type" class="room_type" id="private" value="private">private
-                        <input type="password" name="private_pw" class="private_pw" id="private_pw">
+                        <input type="radio" name="room_type" class="room_type" id="public" value="public">public
+                        <input type="radio" name="room_type" class="room_type" id="private" value="private">private
+                        <div class="pw_container" id="pw_container"><p>password :   </p> <input type="password" name="private_pw" class="private_pw" id="private_pw" placeholder="Enter a password"></div>
                     </div>
                  </div> 
             </form>
@@ -93,8 +95,167 @@
             </div>
           </div>
         </div>
+        
+    <script type ="text/javascript">
+      let curr_room_id;
+      let curr_user="sia";
+      let is_creator = false;
 
-    <script src="chat-client.js"></script>
-    <script src="chat-server.js"></script>
+
+      const showUser = document.getElementById("showUser");
+
+  //default
+  $('.pw_container').hide();
+
+  //if you click private for a room type, an input box for private room pw will show up
+   //if you click public for a room type, an input box for private room pw will dissapear
+  $('input[name="room_type"]').change(function(){
+    if(document.getElementById("private").checked){
+      $('.pw_container').show();
+    }else{
+      $('.pw_container').hide();
+    }
+
+  });
+
+
+  //get input information (creating room)
+  const room_name_input = document.querySelector(".new_room");
+  const room_type_input = document.querySelector(".room_type");
+
+  //chat-log
+  const chat_msge = document.querySelector('.chat_log');
+
+  //send_button
+  const send_msg = document.getElementById('send_message');
+
+  //curr_room_name
+  const curr_room_name = document.getElementById('curr_room');
+
+  const socketio = io.connect();
+
+
+  /////////////////////////////USER STUFF////////////////////////////
+
+  //receiving a new_user from server
+  //this new user will be a current user
+  socketio.on("new_user", function(data) {
+      if(curr_user==null && data.new_user != null && data.new_user.user_id == socketio.user_id) {
+        curr_user = data.new_user;
+        showUser.innerHTML = "username: " + curr_user.username;
+        let rooms = data.chatrooms
+        for(let i = 0; i<rooms.length; i++) {
+          addRoom(rooms[i]);
+        }
+      }
+      var display_users = document.getElementById("usernames");
+      display_users.innerHTML = ""
+      for(var k = 0; k<data.users.length; k++) {
+        display_users.innerHTML += "" + data.users[k].username + "<br>";
+      }
+  });
+
+  ///////////////////////////////CHAT ROOM STUFF/////////////////////
+
+  function create_rooom(){
+      const room_name = room_name_input.value;
+      const radio1 = document.getElementById("public");
+      const radio2 = document.getElementById("private");
+      let room_type = "";
+      let room_PW = "";
+      // console.log(radio1.checked);
+      // console.log(radio2.checked);
+      // console.log(radio2.value);
+      if (roomName === "") {
+        alert("Please fill the input field");
+        return;
+      }else if(radio1.checked !== true && radio2.checked !==true){
+          alert("Please check a type of a chat room");
+        return;
+      }else if(radio2.checked && document.getElementById("private_pw").value === ""){
+          alert("Password is missing");
+        return;
+      }
+
+
+      if(document.getElementById('public').checked) {
+          roomType = document.getElementById('public').value;
+        }else if(document.getElementById('private').checked) {
+          roomType = document.getElementById('private').value;
+          roomPW = document.getElementById("private_pw").value;
+        }
+        console.log(roomType);
+
+      let creator = current_user.username;
+      socketio.emit("new_chatroom_to_s", {room_name:room_name, creator:creator, password: room_pw});
+
+  }
+
+  //new chat room receive from server
+  socketio.on("new_chatroom_to_c", function(data) {
+      add_room_data(data.chat_room);
+      // if(data.chat_room.creator.user_id == socketio.user_id) {
+      //   clearInputs();
+      // }
+  });
+
+  function add_room_data(room){
+  }
+
+  //DOM
+  function show_curr_room(room){
+      curr_room_name.innerText = room;
+  }
+
+///////////////////////MESSAGE STUFF///////////////////////////
+
+  //to show on HTML (DOM)
+  function show_msg(data){
+      const div = document.createElement('div');
+      div.classList.add('message');
+      const p = document.createElement('p');
+      p.classList.add('name_time');
+      p.innerText = data.username;
+
+      //could be an creative portion??
+      p.innerHTML += ` <span>${data.time}</span>`;
+      div.appendChild(p);
+      const msg_input = document.createElement('p');
+      msg_input.classList.add('text');
+      msg_input.innerText = data.message;
+      div.appendChild(msg_input);
+      document.querySelector('.chat_log').appendChild(div);
+  }
+
+  //message receive from server
+  socketio.on('message', message=>{
+      console.log("received from server ",message);
+      show_msg(message);
+  })
+
+  //emit is to send something to server
+  function send_message(e){
+      let msg = document.getElementById("message_input").value;
+
+      //seding current time
+      let today = new Date();
+      let time = today.getHours() + ":" + today.getMinutes();
+
+      console.log(msg);
+      socketio.emit("message", {message:msg,username:curr_user,time:time});
+
+      //clearing message text box
+      document.getElementById("message_input").value="";
+  }
+  send_msg.addEventListener("click", send_message, false); 
+
+  //when user click a button to leave chat room
+  document.getElementById('leave_btn').addEventListener('click', () => {
+      const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
+      if (leaveRoom) {
+        curr_room_id = "";
+      } 
+    });
+    </script>
 </body>
 </html>

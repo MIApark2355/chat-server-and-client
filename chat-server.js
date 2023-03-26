@@ -2,21 +2,43 @@
 const http = require("http"),
     fs = require("fs");
 
+
+// Import Socket.IO and pass our HTTP server object to it.
+const socketio = require("socket.io")(http, {
+    wsEngine: 'ws'
+});
+
+
 const port = 3456;
 const file = "client.html";
 // Listen for HTTP connections.  This is essentially a miniature static file server that only serves our one file, client.html, on port 3456:
 const server = http.createServer(function (req, res) {
     // This callback runs when a new connection is made to our HTTP server.
 
-    fs.readFile(file, function (err, data) {
-        // This callback runs when the client.html file has been read from the filesystem.
-
-        if (err) return res.writeHead(500);
-        res.writeHead(200);
-        res.end(data);
-    });
+    switch (req.url) {
+        case "/style.css" :
+          fs.readFile("style.css", function(err, data){
+          // This callback runs when the client.css file has been read from the filesystem.
+          if(err) return res.writeHead(500);
+          res.writeHead(200, {'Content-Type': 'text/css'});
+          res.end(data);
+        });
+        break;
+        default :
+        fs.readFile(file, function (err, data) {
+            // This callback runs when the client.html file has been read from the filesystem.
+            if (err) return res.writeHead(500);
+            res.writeHead(200);
+            res.end(data);
+        });
+      }
 });
 server.listen(port);
+
+
+
+// Attach our Socket.IO server to our HTTP server to listen
+const io = socketio.listen(server);
 
 //locally creating a data instead of using mysql
 //[user]
@@ -53,15 +75,9 @@ let users_lst = [];
 let rooms_list = [];
 
 
-// Import Socket.IO and pass our HTTP server object to it.
-const socketio = require("socket.io")(http, {
-    wsEngine: 'ws'
-});
 
-// Attach our Socket.IO server to our HTTP server to listen
-const io = socketio.listen(server);
 io.sockets.on("connection", function (socket) {
-
+    console.log("connected");
     //received new user
   socket.on('new_user', function(data) {
     //check if a new username is available
@@ -99,16 +115,17 @@ io.sockets.on("connection", function (socket) {
          io.emit('messgae',"A user has left the room");
      })
 
-    socket.on('message_to_server', function (data) {
+    socket.on('message', function (data) {
         // This callback runs when the server receives a new message from the client.
 
+        console.log("received from client");
         console.log("message: " + data["message"]); // log it to the Node.JS output
+        console.log("time: " + data["time"]);
         
        
-
         //sending it down to all the clients
         //cf. io.emit==> could print the message twice
-        io.sockets.emit("message_to_client", { message: data["message"] }) // broadcast the message to other users
+        io.sockets.emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
         //(=)socket.broadcast.emit("message_to_client", { message: data["message"] })
     });
 });
