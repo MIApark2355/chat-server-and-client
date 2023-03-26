@@ -1,20 +1,20 @@
 let curr_room_id;
-let curr_user;
+let curr_user="sia";
 let is_creator = false;
 
 const showUser = document.getElementById("showUser");
 
 //default
-$(".private_pw").hide();
+$('#private_pw').hide();
 
 //if you click private for a room type, an input box for private room pw will show up
 document.getElementById("private").addEventListener("checked",function open(e){
-    $(".private_pw").show();
+    $('#private_pw').show();
 })
 
 //if you click public for a room type, an input box for private room pw will dissapear
 document.getElementById("public").addEventListener("checked",function open(e){
-    $(".private_pw").hide();
+    $('#private_pw').hide();
 })
 
 
@@ -22,11 +22,18 @@ document.getElementById("public").addEventListener("checked",function open(e){
 const room_name_input = document.querySelector(".new_room");
 const room_type_input = document.querySelector(".room_type");
 
+//chat-log
+const chat_msge = document.querySelector('.chat_log');
 
+//send_button
+const send_msg = document.getElementById('send_message');
+
+//curr_room_name
+const curr_room_name = document.getElementById('curr_room');
 
 const socketio = io.connect();
 
-//sending a new_user to server
+//receiving a new_user from server
 //this new user will be a current user
 socketio.on("new_user", function(data) {
     if(curr_user==null && data.new_user != null && data.new_user.user_id == socketio.user_id) {
@@ -87,24 +94,57 @@ socketio.on("new_chatroom_to_c", function(data) {
 });
 
 function add_room_data(room){
-
 }
 
+//DOM
+function show_curr_room(room){
+    curr_room_name.innerText = room;
+}
 
 
 
 socketio.on("message_to_client",function(data) {
-    //Append an HR thematic break and the escaped HTML of the new message
-    document.getElementById("chatlog").appendChild(document.createElement("hr"));
-    document.getElementById("chatlog").appendChild(document.createTextNode(data['message']));
+    
 });
 
+//to show on HTML (DOM)
+function show_msg(message){
+    const div = document.createElement('div');
+    div.classList.add('message');
+    const p = document.createElement('p');
+    p.classList.add('name_time');
+    p.innerText = message.username;
+
+    //could be an creative portion??
+    p.innerHTML += `<span>${message.time}</span>`;
+    div.appendChild(p);
+    const msg_input = document.createElement('p');
+    msg_input.classList.add('text');
+    msg_input.innerText = message.text;
+    div.appendChild(msg_input);
+    document.querySelector('.chat_log').appendChild(div);
+}
+
+//message receive from server
 socketio.on('message', message=>{
     console.log(message);
+    show_msg(message);
 })
+
 //emit is to send something to server
 function send_message(e){
     let msg = document.getElementById("message_input").value;
     socketio.emit("message_to_server", {message:msg});
+
+    //clearing message text box
+    e.target.elements.message_input.value = '';
 }
-document.getElementById("send_message").addEventListener("click", sendMessage, false); 
+send_msg.addEventListener("click", send_message, false); 
+
+//when user click a button to leave chat room
+document.getElementById('leave_btn').addEventListener('click', () => {
+    const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
+    if (leaveRoom) {
+      curr_room_id = "";
+    } 
+  });
