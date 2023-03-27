@@ -227,11 +227,13 @@ but also should "leave" the room if the user is joining one.
       socket.on('leave_room', function(data) {
         let room_to_leave = data["room_name"];
         let user_leaving = data["username"];
+        let creator_name;
         let room_num;
         let new_member_array;
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === room_to_leave){
                 room_num = j;
+                creator_name = rooms_lst[j].creator_name;
                 new_member_array = rooms_lst[j].members;
             }
         }
@@ -246,7 +248,7 @@ but also should "leave" the room if the user is joining one.
         }
     }
         console.log("room list after a member left",rooms_lst);
-        io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst,room_index:room_num});
+        io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving,creator_name:creator_name,users_lst:users_lst,rooms_lst:rooms_lst,room_index:room_num});
         socket.leave("room"+room_to_leave);
       });
 

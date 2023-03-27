@@ -220,7 +220,7 @@ login.addEventListener("click", get_user, false);
         for(let j = 0; j<room_array.length; j++) {
         str += `<option value=${room_array[j].room_name}>${room_array[j].room_name}</option>`;
         } 
-        show_room_lst.innerHTML += str;
+        show_room_lst.innerHTML = str;
 
         $(".in").show();
         $(".out").hide();
@@ -338,7 +338,7 @@ login.addEventListener("click", get_user, false);
   socketio.on("join_room", function(data) {
     is_creator = false;
     joined_room_name = data["room_name"];
-    console.log(data["joining_user"]," joined the room!");
+    console.log(data["username"]," joined the room!");
     $(".after_join").show();
     
 
@@ -349,7 +349,7 @@ login.addEventListener("click", get_user, false);
       let room = data.rooms_lst[room_index];
       console.log(room["members"]);
       for(let j = 0; j<room["members"].length; j++) {
-        if(data["creator_name"] === curr_user){
+        if(data["creator_name"] === room["members"][j]){
           str += `<div class="user">
             <div class="user_container">
               <p>${room["members"][j]}</p>
@@ -453,16 +453,24 @@ login.addEventListener("click", get_user, false);
 
 
   //should update data for other users in the room
-  //date passed : user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst, room_index
+  //date passed : user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst, room_index, creator_name
   function update_data(data){
     //showing without left users
     let show_users = document.getElementById("users_lst");
       let str ="";
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
-      console.log(room["members"]);
+      console.log("updated after a user left",room["members"]);
+      console.log("creator: ",data["creator_name"]);
       for(let j = 0; j<room["members"].length; j++) {
-        str += `<div class="user">
+        if(data["creator_name"] === room["members"][j]){
+          str += `<div class="user">
+            <div class="user_container">
+              <p>${room["members"][j]}</p>
+            </div>
+          </div>`;
+        }else{
+          str += `<div class="user">
             <div class="user_container">
               <p>${room["members"][j]}</p>
               <div class="two_btn is_creator">
@@ -471,6 +479,7 @@ login.addEventListener("click", get_user, false);
               </div>
             </div>
           </div>`;
+        }
       }
       show_users.innerHTML = str;
   }
