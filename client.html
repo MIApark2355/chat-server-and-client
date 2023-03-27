@@ -10,14 +10,14 @@
 <body>
     <div class="header">
         <h1>Chat Room</h1>
-        <button type="submit" class="logout_btn in" id="logout_btn">Log out</button>
-        <button type="submit" class="leave_btn not_creator" id="leave_btn">Leave room</button>
-        <button type="submit" class="delete_btn is_creator" id="delete_btn">Delete room</button>
+        <!--<button type="submit" class="logout_btn in" id="logout_btn">Log out</button>-->
+        <button type="submit" class="leave_btn" id="leave_btn">Leave room</button>
+        <button type="submit" class="delete_btn" id="delete_btn">Delete room</button>
     </div>
         
     <div class="container">
         <div class="left">
-          <div class="username_container"><div class="in"><div class="showUser" id="showUser">Your username is </div></div>
+          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><p>Creator</p></div>
           <div class="out"><div class="username_input_container">
             <label for="username">Username</label>
             <input
@@ -59,7 +59,7 @@
         <div class="middle in">
             
             <div class="chat_box after_join">
-              <h3 class="curr_room" id="curr_room">room1</h3>
+              <div class="curr_room" id="curr_room"></div>
               <div id="chat_log" class="chat_log">
                 <div class="message">
                   <p class="name_time">Mia <span>9:12pm</span></p>
@@ -119,10 +119,34 @@
         </div>
         
     <script type ="text/javascript">
-      let joined_room_name;
+      let joined_room_name="";
       let curr_user="";
       let is_creator = false;
 
+  function setDefault(){
+    $('.pw_container').hide();
+    $(".in").hide();
+    $(".after_join").hide();
+    $(".out").show();
+    $(".is_creator").hide();
+    $(".leave_btn").hide();
+    $(".delete_btn").hide();
+    $(".not_creator").hide();
+    curr_user="";
+    joined_room_name="";
+    is_creator = false;
+  }
+
+  function setLeaveRoom(){
+    $('.pw_container').hide();
+    $(".after_join").hide();
+    $(".leave_btn").hide();
+    $(".is_creator").hide();
+    $(".not_creator").hide();
+    $(".delete_btn").hide();
+    joined_room_name="";
+    is_creator = false;
+  }
 
   //default
   $('.pw_container').hide();
@@ -130,6 +154,8 @@
   $(".after_join").hide();
   $(".out").show();
   $(".is_creator").hide();
+  $(".leave_btn").hide();
+    $(".delete_btn").hide();
   $(".not_creator").hide();
 
   //if you click private for a room type, an input box for private room pw will show up
@@ -157,7 +183,7 @@
   //login button
   const login = document.getElementById('login_btn');
 
-  const logout = document.getElementById('logout_btn');
+  //const logout = document.getElementById('logout_btn');
 
   //join button
   const join_btn = document.querySelector('.join_btn');
@@ -228,27 +254,27 @@ login.addEventListener("click", get_user, false);
       $(".is_creator").hide();
   });
 
-  //from DOM and emit to server (username that should be removed from the users list)
-function remove_user(e){
+//   //from DOM and emit to server (username that should be removed from the users list)
+// function remove_user(e){
 
-  console.log("current user(",curr_user,") will be removed");
-  socketio.emit("remove_user", {username:curr_user ,user_id:socketio.id});
+//   console.log("current user(",curr_user,") will be removed");
+//   socketio.emit("remove_user", {username:curr_user ,user_id:socketio.id,room_name:joined_room_name});
 
-}
-logout.addEventListener("click", remove_user, false);
+// }
+// logout.addEventListener("click", remove_user, false);
 
-socketio.on('remove_user', data=>{
-      console.log("removed from server ");
+// socketio.on('remove_user', data=>{
+//       console.log("removed from server ");
 
-      //reset the current user to be empty string
-      curr_user="";
-      $('.pw_container').hide();
-      $(".in").hide();
-      $(".after_join").hide();
-      $(".out").show();
-      $(".is_creator").hide();
-  })
+//       //reset the current user to be empty string
+//       if(curr_user ===data["user_name"]){
+//       setDefault();
+//     }else{
+//       update_data(data);
+//     }
+//   })
   ///////////////////////////////CHAT ROOM STUFF/////////////////////
+
 
   function create_room(){
       const room_name = room_name_input.value;
@@ -291,69 +317,65 @@ socketio.on('remove_user', data=>{
 
   //new chat room receive from server
   socketio.on("create_room", function(data) {
-    console.log("ROOMs list received from server ", data);
+    console.log("New Room Created => ", data);
     let str =`<option value=${data["room"].room_name}>${data["room"].room_name}</option>`
     show_room_lst.innerHTML += str;
   });
 
   function remove_room(){
-    console.log("remove request sent to server");
+    console.log("Creator is trying to remove the room");
     socketio.emit("remove_room", {room_name:joined_room_name, creator:curr_user, creator_id:socketio.id});
   }
   delete_room.addEventListener("click", remove_room, false);
 
   socketio.on("remove_room", function(data) {
-    console.log("room will be deleted from the room options(using updated rooms list) ");
+    alert("Room has been deleted by a creator")
     let str ="";
-      
+    
+    //reset room options
     for(let j = 0; j<data["rooms_lst"].length; j++) {
       str += `<option value=${data["room"].room_name}>${data["room"].room_name}</option>`;
     } 
     show_room_lst.innerHTML += str;
-    is_creator = false;
-    joined_room_name ="";
-    
+    setLeaveRoom();
   });
 
   //DOM
-  function show_curr_room(room){
-      curr_room_name.innerText = room;
+  function show_curr_room(){
+      curr_room_name.innerText = joined_room_name;
   }
 
 
   function join_room(){
     const to_join = document.getElementById("room_names").value;
-    console.log("trying to join ",to_join);
+    console.log("trying to join ", to_join);
     socketio.emit("join_room", {room_name:to_join, username:curr_user,  user_id:socketio.id});
   }
   join_btn.addEventListener("click", join_room, false);
 
   join_btn.addEventListener("click", e=>{
-    e.stopPropagation();
+    e.preventDefault();
   }, false);
 
 
   socketio.on("join_room", function(data) {
-    console.log("user joined the room");
+    is_creator = false;
+    joined_room_name = data["room_name"];
+    console.log("user joined the room", joined_room_name);
+    console.log("this user creator? ", data["is_creator"]);
     $(".after_join").show();
-    if(data["is_creator"]){
-      is_creator = true;
-      $(".is_creator").show();
-      $(".not_creator").hide();
-    }else{
-      $(".is_creator").hide();
-      $(".not_creator").show();
-    }
+    
 
     //show all the users in the chat room on the left side
     let show_users = document.getElementById("users_lst");
       let str ="";
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
-      for(let j = 0; j<room.members.length; j++) {
+      console.log(room["members"]);
+      for(let j = 0; j<room["members"].length; j++) {
         str += `<div class="user">
             <div class="user_container">
-              <p>${room.members[j]}</p>
+              <p>${room["members"][j]}</p>
               <div class="two_btn is_creator">
                 <button class="kick_btn" id="kick_btn">Kick</button>
                 <button class="ban_btn" id="ban_btn" >Ban</button>
@@ -362,8 +384,46 @@ socketio.on('remove_user', data=>{
           </div>`;
       }
       show_users.innerHTML = str;
+      show_curr_room();
+
+      if(data["is_creator"] ===true){
+      is_creator = true;
+      $(".two_btn").show();
+      $(".leave_btn").hide();
+      $(".delete_btn").show();
+    }else{
+      $(".two_btn").hide();
+      $(".delete_btn").hide();
+      $(".leave_btn").show();
+    }
     
   });
+
+
+      //when user click a button to leave chat room
+  function leave_room(){
+    const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
+      if (leaveRoom) {
+    console.log("trying to leave ",joined_room_name);
+    socketio.emit("leave_room", {room_name:joined_room_name, username:curr_user,  user_id:socketio.id});
+
+      } 
+    
+  }
+  leave.addEventListener("click", leave_room, false);
+
+
+  socketio.on("leave_room", function(data) {
+    console.log(data["user_leaving"]," left the room!");
+    if(curr_user ===data["user_leaving"]){
+      setLeaveRoom();
+    }else{
+      update_data(data);
+    }
+    
+  });
+
+
 ///////////////////////MESSAGE STUFF///////////////////////////
 
   //to show on HTML (DOM)
@@ -406,20 +466,34 @@ socketio.on('remove_user', data=>{
   }
   send_msg.addEventListener("click", send_message, false); 
 
-  //when user click a button to leave chat room
-  document.getElementById('leave_btn').addEventListener('click', () => {
-      const leaveRoom = confirm('Are you sure you want to leave the chatroom?');
-      if (leaveRoom) {
-        curr_room_id = "";
-      } 
-    });
 
-
+  //should update data for other users in the room
+  function update_data(data){
+    //showing without left users
+    let show_users = document.getElementById("users_lst");
+      let str ="";
+      let room_index = data["room_index"];
+      let room = data.rooms_lst[room_index];
+      console.log(room["members"]);
+      for(let j = 0; j<room["members"].length; j++) {
+        str += `<div class="user">
+            <div class="user_container">
+              <p>${room["members"][j]}</p>
+              <div class="two_btn is_creator">
+                <button class="kick_btn" id="kick_btn">Kick</button>
+                <button class="ban_btn" id="ban_btn" >Ban</button>
+              </div>
+            </div>
+          </div>`;
+      }
+      show_users.innerHTML = str;
+  }
 
     //when there is an error
     socketio.on('error', function(data) {
       alert(data.message);
     })
+
 
     </script>
 </body>

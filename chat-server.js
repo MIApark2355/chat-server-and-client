@@ -112,11 +112,12 @@ io.sockets.on("connection", function (socket) {
     //io.in(check_user_id).emit('new_user', {username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
     io.sockets.emit('new_user',{username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
   });
+/*This "logging out" is too complicated since we not only have to delete all the rooms that 'to_be_removed' have made and
+but also should "leave" the room if the user is joining one.
 
   socket.on('remove_user', function(data) {
     let to_be_removed = data.username;
     let to_be_removed_id = data.user_id;
-
     //first we need to remove all the chat rooms that to-be-removed user has made
     for (let j = 0 ; j < rooms_lst.length; j++){
         if(rooms_lst[j].creator === to_be_removed){
@@ -132,8 +133,13 @@ io.sockets.on("connection", function (socket) {
         }
     }
     console.log("users list after removed",users_lst);
-    io.in(to_be_removed_id).emit('remove_user', {username:to_be_removed,user_id:to_be_removed_id,users_lst:users_lst,rooms_lst:rooms_lst});
+    io.in(to_be_removed_id).emit('remove_user', {username:to_be_removed,user_id:to_be_removed_id,users_lst:users_lst,rooms_lst:rooms_lst, room_name:data["room_name"],room_index:room_num});
+    if(data["room_name"] !== ""){
+        socket.leave("room"+data["room_name"]);
+    }
   });
+
+  */
 
     //////////////////////ROOM STUFF////////////////////////
 
@@ -167,8 +173,9 @@ io.sockets.on("connection", function (socket) {
             pw = data["password"];
         }
         let new_room = new Room(check_name, data["creator"], roomType, pw);
+        new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
-        console.log("rooms list updated",rooms_lst);
+        console.log("rooms list updated after creating ",rooms_lst);
         io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
       });
 
@@ -177,13 +184,16 @@ io.sockets.on("connection", function (socket) {
     //could be creative portion --> creator can also remove a chat room
     socket.on('remove_room', function(data) {
         let to_be_removed = data["room_name"];
+        let room_num;
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === to_be_removed){
+                room_num = j;
                 rooms_lst.splice(j,1);
             }
         }
+        let room = rooms_lst[room_num];
         console.log("room list after removed",rooms_lst);
-        io.sockets.emit('remove_room', {rooms_lst:rooms_lst});
+        io.sockets.emit('remove_room', {rooms_lst:rooms_lst, room_name:to_be_removed,room:room});
       });
 
 
@@ -202,8 +212,34 @@ io.sockets.on("connection", function (socket) {
                 rooms_lst[j].members.push(joining_user);
             }
         }
+        socket.join("room"+check_room);
         console.log("room list after a member joined",rooms_lst);
-        io.sockets.emit('join_room', {rooms_lst:rooms_lst, is_creator:is_creator ,room_index:room_num});
+        io.in("room"+check_room).emit('join_room', {rooms_lst:rooms_lst, room_name:check_room, is_creator:is_creator ,room_index:room_num});
+      });
+
+      socket.on('leave_room', function(data) {
+        let room_to_leave = data["room_name"];
+        let user_leaving = data["username"];
+        let new_member_array;
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === room_to_leave){
+                new_member_array = rooms_lst[j].members;
+            }
+        }
+        console.log("problem with ", new_member_array);
+        for(let i = 0 ; i < new_member_array.length ;i++){
+            if(new_member_array[i] === user_leaving){
+                new_member_array.splice(i,1);
+        }
+    }
+    for (let j = 0 ; j < rooms_lst.length; j++){
+        if(rooms_lst[j].room_name === room_to_leave){
+            rooms_lst[j]["members"] = new_member_array;
+        }
+    }
+        console.log("room list after a member left",rooms_lst);
+        socket.leave("room"+check_room);
+        io.in("room"+check_room).emit('leave_room', {user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst});
       });
 
 
