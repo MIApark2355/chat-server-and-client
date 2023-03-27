@@ -233,7 +233,7 @@ but also should "leave" the room if the user is joining one.
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === room_to_leave){
                 room_num = j;
-                creator_name = rooms_lst[j].creator_name;
+                creator_name = rooms_lst[j].creator;
                 new_member_array = rooms_lst[j].members;
             }
         }
@@ -248,10 +248,37 @@ but also should "leave" the room if the user is joining one.
         }
     }
         console.log("room list after a member left",rooms_lst);
-        io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving,creator_name:creator_name,users_lst:users_lst,rooms_lst:rooms_lst,room_index:room_num});
+        io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
         socket.leave("room"+room_to_leave);
       });
 
+      socket.on('kick_user', function(data) {
+        let room_to_leave = data["room_name"];
+        let user_kicked = data["username"];
+        let creator_name;
+        let room_num;
+        let new_member_array;
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === room_to_leave){
+                room_num = j;
+                creator_name = rooms_lst[j].creator;
+                new_member_array = rooms_lst[j].members;
+            }
+        }
+        for(let i = 0 ; i < new_member_array.length ;i++){
+            if(new_member_array[i] === user_kicked){
+                new_member_array.splice(i,1);
+        }
+    }
+    for (let j = 0 ; j < rooms_lst.length; j++){
+        if(rooms_lst[j].room_name === room_to_leave){
+            rooms_lst[j]["members"] = new_member_array;
+        }
+    }
+        console.log("room list after a member kicked our of room",rooms_lst);
+        io.in("room"+room_to_leave).emit('kick_user', {user_kicked: user_kicked, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
+        socket.leave("room"+room_to_leave);
+      });
 
 
     //when a user disconnects

@@ -17,7 +17,7 @@
         
     <div class="container">
         <div class="left">
-          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><p class="is_creator">Creator</p></div>
+          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><div class="creator is_creator">Creator</div></div>
           <div class="out"><div class="username_input_container">
             <label for="username">Username</label>
             <input
@@ -306,7 +306,8 @@ login.addEventListener("click", get_user, false);
   delete_room.addEventListener("click", remove_room, false);
 
   socketio.on("remove_room", function(data) {
-    alert("Room has been deleted by a creator")
+    
+    alert("Room, " + data["room_name"] + ",has been deleted by a creator")
     let str ="";
     
     //reset room options
@@ -314,7 +315,9 @@ login.addEventListener("click", get_user, false);
       str += `<option value=${data["rooms_lst"][j].room_name}>${data["rooms_lst"][j].room_name}</option>`;
     } 
     show_room_lst.innerHTML = str;
-    setLeaveRoom();
+    if(joined_room_name === data["room_name"]){
+      setLeaveRoom();
+    }
   });
 
   //DOM
@@ -326,6 +329,7 @@ login.addEventListener("click", get_user, false);
   function join_room(){
     const to_join = document.getElementById("room_names").value;
     console.log("trying to join ", to_join);
+    joined_room_name = to_join;
     socketio.emit("join_room", {room_name:to_join, username:curr_user,  user_id:socketio.id});
   }
   join_btn.addEventListener("click", join_room, false);
@@ -360,14 +364,15 @@ login.addEventListener("click", get_user, false);
             <div class="user_container">
               <p>${room["members"][j]}</p>
               <div class="two_btn is_creator">
-                <button class="kick_btn" id="kick_btn">Kick</button>
-                <button class="ban_btn" id="ban_btn" >Ban</button>
+                <button class="kick_btn" id="kick_btn" value=${room["members"][j]}>Kick</button>
+                <button class="ban_btn" id="ban_btn" value=${room["members"][j]}>Ban</button>
               </div>
             </div>
           </div>`;
         }
       }
       show_users.innerHTML = str;
+      add_kick_function();
       show_curr_room();
 
       if(data["creator_name"]===curr_user){
@@ -408,6 +413,45 @@ login.addEventListener("click", get_user, false);
     
   });
 
+
+//to add kick function to each button
+function add_kick_function(){
+    const kick_btns = document.querySelectorAll(".kick_btn");
+    
+    kick_btns.forEach((b) => {
+
+        b.addEventListener("click", (e) =>{
+
+            let to_be_kicked = e.target.value;
+            
+            kick_user(to_be_kicked);
+
+        });
+    });
+};
+
+
+    //Creators of chat rooms can temporarily kick others out of the room
+    function kick_user(to_be_kicked){
+    const kick_user = confirm('Are you sure you want to kick this user out of room?');
+      if (kick_user) {
+    socketio.emit("kick_user", {room_name:joined_room_name, username:to_be_kicked, user_id:socketio.id});
+
+      } 
+    
+  }
+
+
+  socketio.on("kick_user", function(data) {
+    console.log(data["user_kicked"]," is kicked out of this room!");
+    if(curr_user === data["user_kicked"]){
+      alert("You are kicked out of the room!");
+      setLeaveRoom();
+    }else{
+      update_data(data);
+    }
+    
+  });
 
 ///////////////////////MESSAGE STUFF///////////////////////////
 
@@ -452,6 +496,8 @@ login.addEventListener("click", get_user, false);
   send_msg.addEventListener("click", send_message, false); 
 
 
+/////////////////////////HELPER FUNCTIONS///////////////////////////
+
   //should update data for other users in the room
   //date passed : user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst, room_index, creator_name
   function update_data(data){
@@ -474,14 +520,15 @@ login.addEventListener("click", get_user, false);
             <div class="user_container">
               <p>${room["members"][j]}</p>
               <div class="two_btn is_creator">
-                <button class="kick_btn" id="kick_btn">Kick</button>
-                <button class="ban_btn" id="ban_btn" >Ban</button>
+                <button class="kick_btn" id="kick_btn" value=${room["members"][j]}>Kick</button>
+                <button class="ban_btn" id="ban_btn" value=${room["members"][j]}>Ban</button>
               </div>
             </div>
           </div>`;
         }
       }
       show_users.innerHTML = str;
+      add_kick_function();
   }
 
     //when there is an error

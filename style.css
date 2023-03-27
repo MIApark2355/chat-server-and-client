@@ -55,8 +55,9 @@
     text-align: center;
 }
 
-.showUser p{
+.showUser .creator {
     color: coral;
+    border: 1px;
     font-size: 10px;
 }
 
@@ -78,6 +79,16 @@
     width: 100%;
 }
 .user_containter .two_btn{
+}
+
+.kick_btn .ban_btn{
+    width: 100px;
+    justify-items: right;
+    margin-bottom: 10px;
+    border-radius: 1px;
+    cursor:pointer;
+    background-color: white;
+    border: 1px solid plum;  
 }
 
 
