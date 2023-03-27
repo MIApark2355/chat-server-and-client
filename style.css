@@ -49,7 +49,7 @@
     border: 0.2rem solid yellow;
     
 }
-.showUser{
+.showUser .actual_name{
     color: yellow;
     text-decoration: double;
     text-align: center;
@@ -59,6 +59,7 @@
     color: coral;
     border: 1px;
     font-size: 10px;
+    text-align: center;
 }
 
 .users_lst{
@@ -79,16 +80,28 @@
     width: 100%;
 }
 .user_containter .two_btn{
+
+    width: 90%;
+    display: inline-block;
+    right: 5%;
+    justify-items: right;
 }
 
-.kick_btn .ban_btn{
-    width: 100px;
+.kick_btn{
+    width: 50px;
     justify-items: right;
-    margin-bottom: 10px;
     border-radius: 1px;
     cursor:pointer;
     background-color: white;
-    border: 1px solid plum;  
+    border: 2px yellow
+} 
+.ban_btn{
+    width: 50px;
+    justify-items: right;
+    border-radius: 1px;
+    cursor:pointer;
+    background-color: white;
+    border: 2px yellow
 }
 
 

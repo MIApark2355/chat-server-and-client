@@ -17,7 +17,11 @@
         
     <div class="container">
         <div class="left">
-          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><div class="creator is_creator">Creator</div></div>
+          <div class="username_container">
+            <div class="in">
+              <div class="showUser" id="showUser"><div class="creator">creator</div></div>
+              
+            </div>
           <div class="out"><div class="username_input_container">
             <label for="username">Username</label>
             <input
@@ -202,33 +206,70 @@ function get_user(e){
 }
 login.addEventListener("click", get_user, false);
 
-  //receiving a new_user from server
-  //this new user will be a current user
-  socketio.on("new_user", function(data) {
-    console.log("users list received from server ",data);
-      if(curr_user==="" && data.username !== null && data.user_id === socketio.id) {
-        curr_user = data.username;
-        showUser.innerHTML = `<strong>${curr_user}</strong>`;
-        // let rooms = data.chatrooms
-        // for(let i = 0; i<rooms.length; i++) {
-        //   add_room(rooms[i]);
-        // }
-        console.log("successfully logged in!");
-        console.log("This is room options: ", data["rooms_lst"]);
-        let room_array = data["rooms_lst"];
-        let str ="";
-        for(let j = 0; j<room_array.length; j++) {
-        str += `<option value=${room_array[j].room_name}>${room_array[j].room_name}</option>`;
-        } 
-        show_room_lst.innerHTML = str;
+//receiving a new_user from server
+//this new user will be a current user
+socketio.on("new_user", function(data) {
+  console.log("users list received from server ",data);
+    if(curr_user==="" && data.username !== null && data.user_id === socketio.id) {
+      curr_user = data.username;
+      showUser.innerHTML = `<div class="actual_name">${curr_user}</div>`;
+      // let rooms = data.chatrooms
+      // for(let i = 0; i<rooms.length; i++) {
+      //   add_room(rooms[i]);
+      // }
+      console.log("successfully logged in!");
+      console.log("This is room options: ", data["rooms_lst"]);
+      let room_array = data["rooms_lst"];
+      let str ="";
+      for(let j = 0; j<room_array.length; j++) {
+      str += `<option value=${room_array[j].room_name}>${room_array[j].room_name}</option>`;
+      } 
+      show_room_lst.innerHTML = str;
 
-        $(".in").show();
-        $(".out").hide();
-        
-
-      }
+      $(".in").show();
+      $(".out").hide();
       
-      $(".is_creator").hide();
+
+    }
+    
+    $(".is_creator").hide();
+});
+
+//to add ban function to each button
+function add_ban_function(){
+    const ban_btns = document.querySelectorAll(".ban_btn");
+    
+    ban_btns.forEach((b) => {
+
+        b.addEventListener("click", (e) =>{
+
+            let to_be_banned = e.target.value;
+            
+            ban_user(to_be_banned);
+
+        });
+    });
+};
+
+
+    //Creators of chat rooms can permanently ban users from joining that particular room
+    function ban_user(to_be_banned){
+    const ban_user = confirm('Are you sure you want to ban this user');
+      if (ban_user) {
+    socketio.emit("ban_user", {room_name:joined_room_name, username:to_be_banned, user_id:socketio.id});
+      } 
+    
+  }
+
+  socketio.on("ban_user", function(data) {
+    console.log(data["user_banned"]," is banned!");
+    if(curr_user === data["user_banned"]){
+      alert("You are banned from joining the chat room");
+      setLeaveRoom();
+    }else{
+      update_data(data);
+    }
+    
   });
 
 //   //from DOM and emit to server (username that should be removed from the users list)
@@ -373,11 +414,13 @@ login.addEventListener("click", get_user, false);
       }
       show_users.innerHTML = str;
       add_kick_function();
+      add_ban_function();
       show_curr_room();
 
       if(data["creator_name"]===curr_user){
       is_creator = true;
       $(".two_btn").show();
+      $(".creator").show();
       $(".is_creator").show();
       $(".leave_btn").hide();
       $(".delete_btn").show();
@@ -529,6 +572,7 @@ function add_kick_function(){
       }
       show_users.innerHTML = str;
       add_kick_function();
+      add_ban_function();
   }
 
     //when there is an error

@@ -112,6 +112,56 @@ io.sockets.on("connection", function (socket) {
     //io.in(check_user_id).emit('new_user', {username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
     io.sockets.emit('new_user',{username:check_username,user_id:check_user_id,users_lst:users_lst,rooms_lst:rooms_lst});
   });
+
+
+  //ban function
+  //passed data : room_name:joined_room_name, username:to_be_banned, user_id:socketio.id
+  socket.on('ban_user', function(data) {
+    let room_to_leave = data["room_name"];
+    let user_banned = data["username"];
+    let user_banned_id;
+    let room_num = -1;
+    let creator_name;
+    //updating banned container
+    for (let j = 0 ; j < rooms_lst.length; j++){
+        if(rooms_lst[j].room_name === check_room){
+            room_num = j;
+            creator_name =rooms_lst[j].creator;
+            if(!rooms_lst[j].banned.includes(user_banned)){
+                rooms_lst[j].banned.push(user_banned);
+            }
+            
+        }
+    }
+    //updating members container
+    let new_member_array;
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === room_to_leave){
+                room_num = j;
+                creator_name = rooms_lst[j].creator;
+                new_member_array = rooms_lst[j].members;
+            }
+        }
+        for(let i = 0 ; i < new_member_array.length ;i++){
+            if(new_member_array[i] === user_banned){
+                new_member_array.splice(i,1);
+        }
+    }
+    for (let j = 0 ; j < rooms_lst.length; j++){
+        if(rooms_lst[j].room_name === room_to_leave){
+            rooms_lst[j]["members"] = new_member_array;
+        }
+    }
+    for(let j=0; j<users_lst.length; j++) {
+      if(users_lst[j].username=== user_banned) {
+        user_banned_id =users_lst[j].user_id;
+        break;
+      }
+    }
+    console.log("room list after ban ",rooms_lst);
+    io.in("room"+room_to_leave).emit('ban_user', {user_banned: user_banned, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
+    io.sockets.sockets[user_banned_id].leave("room"+room_to_leave);
+  });
 /*This "logging out" is too complicated since we not only have to delete all the rooms that 'to_be_removed' have made and
 but also should "leave" the room if the user is joining one.
 
@@ -201,7 +251,7 @@ but also should "leave" the room if the user is joining one.
         let check_room = data["room_name"];
         let joining_user = data["username"];
         let is_creator = false;
-        
+        let user_id = data["user_id"];
         let room_num = -1;
         let creator_name;
         for (let j = 0 ; j < rooms_lst.length; j++){
@@ -212,6 +262,9 @@ but also should "leave" the room if the user is joining one.
                     console.log("You are creator");
                     is_creator =true;
                     
+                }if(rooms_lst[j].banned.includes(joining_user)){
+                    io.in(user_id).emit("error", {message:"You are not allowed to join this chat room!"});
+                        return;
                 }
                 if(!rooms_lst[j].members.includes(joining_user)){
                     rooms_lst[j].members.push(joining_user);
@@ -255,6 +308,7 @@ but also should "leave" the room if the user is joining one.
       socket.on('kick_user', function(data) {
         let room_to_leave = data["room_name"];
         let user_kicked = data["username"];
+        let user_kicked_id;
         let creator_name;
         let room_num;
         let new_member_array;
@@ -275,9 +329,15 @@ but also should "leave" the room if the user is joining one.
             rooms_lst[j]["members"] = new_member_array;
         }
     }
+    for(let j=0; j<users_lst.length; j++) {
+      if(users_lst[j].username=== user_kicked) {
+        user_kicked_id =users_lst[j].user_id;
+        break;
+      }
+    }
         console.log("room list after a member kicked our of room",rooms_lst);
         io.in("room"+room_to_leave).emit('kick_user', {user_kicked: user_kicked, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
-        socket.leave("room"+room_to_leave);
+        io.sockets.sockets[user_kicked_id].leave("room"+room_to_leave);
       });
 
 
