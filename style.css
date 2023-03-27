@@ -55,6 +55,11 @@
     text-align: center;
 }
 
+.showUser p{
+    color: coral;
+    font-size: 10px;
+}
+
 .users_lst{
     padding-top: 30px;
 }

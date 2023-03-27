@@ -17,7 +17,7 @@
         
     <div class="container">
         <div class="left">
-          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><p>Creator</p></div>
+          <div class="username_container"><div class="in"><div class="showUser" id="showUser"></div><p class="is_creator">Creator</p></div>
           <div class="out"><div class="username_input_container">
             <label for="username">Username</label>
             <input
@@ -35,24 +35,6 @@
             
         <div class="users_lst after_join" id="users_lst">
           <label>Current Users</label>
-          <div class="user">
-            <div class="user_container">
-              <p>user1</p>
-              <div class="two_btn is_creator">
-                <button class="kick_btn" id="kick_btn">Kick</button>
-                <button class="ban_btn" id="ban_btn">Ban</button>
-              </div>
-            </div>
-          </div>
-          <div class="user">
-            <div class="user_container">
-              <p>user2</p>
-              <div class="two_btn">
-                <button class="kick_btn" id="kick_btn">Kick</button>
-                <button class="ban_btn" id="ban_btn" >Ban</button>
-              </div>
-            </div>
-          </div>
         </div>
         </div>
 
@@ -61,12 +43,7 @@
             <div class="chat_box after_join">
               <div class="curr_room" id="curr_room"></div>
               <div id="chat_log" class="chat_log">
-                <div class="message">
-                  <p class="name_time">Mia <span>9:12pm</span></p>
-                  <p class="text">
-                    Hi
-                  </p>
-                </div>
+
               </div>
             </div>
               <div class="message_input_container after_join">
@@ -334,15 +311,15 @@ login.addEventListener("click", get_user, false);
     
     //reset room options
     for(let j = 0; j<data["rooms_lst"].length; j++) {
-      str += `<option value=${data["room"].room_name}>${data["room"].room_name}</option>`;
+      str += `<option value=${data["rooms_lst"][j].room_name}>${data["rooms_lst"][j].room_name}</option>`;
     } 
-    show_room_lst.innerHTML += str;
+    show_room_lst.innerHTML = str;
     setLeaveRoom();
   });
 
   //DOM
   function show_curr_room(){
-      curr_room_name.innerText = joined_room_name;
+      curr_room_name.innerText = "Room Name ==>  "+ joined_room_name;
   }
 
 
@@ -361,8 +338,7 @@ login.addEventListener("click", get_user, false);
   socketio.on("join_room", function(data) {
     is_creator = false;
     joined_room_name = data["room_name"];
-    console.log("user joined the room", joined_room_name);
-    console.log("this user creator? ", data["is_creator"]);
+    console.log(data["joining_user"]," joined the room!");
     $(".after_join").show();
     
 
@@ -373,7 +349,14 @@ login.addEventListener("click", get_user, false);
       let room = data.rooms_lst[room_index];
       console.log(room["members"]);
       for(let j = 0; j<room["members"].length; j++) {
-        str += `<div class="user">
+        if(data["creator_name"] === curr_user){
+          str += `<div class="user">
+            <div class="user_container">
+              <p>${room["members"][j]}</p>
+            </div>
+          </div>`;
+        }else{
+          str += `<div class="user">
             <div class="user_container">
               <p>${room["members"][j]}</p>
               <div class="two_btn is_creator">
@@ -382,13 +365,15 @@ login.addEventListener("click", get_user, false);
               </div>
             </div>
           </div>`;
+        }
       }
       show_users.innerHTML = str;
       show_curr_room();
 
-      if(data["is_creator"] ===true){
+      if(data["creator_name"]===curr_user){
       is_creator = true;
       $(".two_btn").show();
+      $(".is_creator").show();
       $(".leave_btn").hide();
       $(".delete_btn").show();
     }else{
@@ -415,7 +400,7 @@ login.addEventListener("click", get_user, false);
 
   socketio.on("leave_room", function(data) {
     console.log(data["user_leaving"]," left the room!");
-    if(curr_user ===data["user_leaving"]){
+    if(curr_user === data["user_leaving"]){
       setLeaveRoom();
     }else{
       update_data(data);
@@ -446,7 +431,7 @@ login.addEventListener("click", get_user, false);
 
   //message receive from server
   socketio.on('message', message=>{
-      console.log("received from server ",message);
+      console.log("message from ",message["username"]);
       show_msg(message);
   })
 
@@ -458,8 +443,8 @@ login.addEventListener("click", get_user, false);
       let today = new Date();
       let time = today.getHours() + ":" + today.getMinutes();
 
-      console.log(msg);
-      socketio.emit("message", {message:msg,username:curr_user,time:time});
+      //console.log(msg);
+      socketio.emit("message", {room_name:joined_room_name,message:msg,username:curr_user,time:time});
 
       //clearing message text box
       document.getElementById("message_input").value="";
@@ -468,6 +453,7 @@ login.addEventListener("click", get_user, false);
 
 
   //should update data for other users in the room
+  //date passed : user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst, room_index
   function update_data(data){
     //showing without left users
     let show_users = document.getElementById("users_lst");

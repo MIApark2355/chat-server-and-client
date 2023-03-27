@@ -173,7 +173,7 @@ but also should "leave" the room if the user is joining one.
             pw = data["password"];
         }
         let new_room = new Room(check_name, data["creator"], roomType, pw);
-        new_room.members.push(data["creator"]);
+        //new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
         console.log("rooms list updated after creating ",rooms_lst);
         io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
@@ -201,32 +201,40 @@ but also should "leave" the room if the user is joining one.
         let check_room = data["room_name"];
         let joining_user = data["username"];
         let is_creator = false;
+        
         let room_num = -1;
+        let creator_name;
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room){
                 room_num = j;
+                creator_name =rooms_lst[j].creator;
                 if(rooms_lst[j].creator === joining_user){
                     console.log("You are creator");
                     is_creator =true;
+                    
                 }
-                rooms_lst[j].members.push(joining_user);
+                if(!rooms_lst[j].members.includes(joining_user)){
+                    rooms_lst[j].members.push(joining_user);
+                }
+                
             }
         }
         socket.join("room"+check_room);
         console.log("room list after a member joined",rooms_lst);
-        io.in("room"+check_room).emit('join_room', {rooms_lst:rooms_lst, room_name:check_room, is_creator:is_creator ,room_index:room_num});
+        io.in("room"+check_room).emit('join_room', {rooms_lst:rooms_lst,username:joining_user, room_name:check_room, creator_name:creator_name ,room_index:room_num});
       });
 
       socket.on('leave_room', function(data) {
         let room_to_leave = data["room_name"];
         let user_leaving = data["username"];
+        let room_num;
         let new_member_array;
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === room_to_leave){
+                room_num = j;
                 new_member_array = rooms_lst[j].members;
             }
         }
-        console.log("problem with ", new_member_array);
         for(let i = 0 ; i < new_member_array.length ;i++){
             if(new_member_array[i] === user_leaving){
                 new_member_array.splice(i,1);
@@ -238,8 +246,8 @@ but also should "leave" the room if the user is joining one.
         }
     }
         console.log("room list after a member left",rooms_lst);
-        socket.leave("room"+check_room);
-        io.in("room"+check_room).emit('leave_room', {user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst});
+        io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving,users_lst:users_lst,rooms_lst:rooms_lst,room_index:room_num});
+        socket.leave("room"+room_to_leave);
       });
 
 
@@ -259,7 +267,7 @@ but also should "leave" the room if the user is joining one.
        
         //sending it down to all the clients
         //cf. io.emit==> could print the message twice
-        io.sockets.emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
+        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
         //(=)socket.broadcast.emit("message_to_client", { message: data["message"] })
     });
 });
