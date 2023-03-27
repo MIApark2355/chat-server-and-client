@@ -149,7 +149,7 @@ io.sockets.on("connection", function (socket) {
     }
     for (let j = 0 ; j < rooms_lst.length; j++){
         if(rooms_lst[j].room_name === room_to_leave){
-            rooms_lst[j]["members"] = new_member_array;
+            rooms_lst[j].members = new_member_array;
         }
     }
     for(let j=0; j<users_lst.length; j++) {
@@ -263,18 +263,19 @@ but also should "leave" the room if the user is joining one.
             }
         }
         console.log("room private?",is_private);
-        io.sockets.emit('check_room', {room_name:check_room_name, is_private:is_private});
+        socket.emit('check_room', {room_name:check_room_name, is_private:is_private});
       });
 
 
-      //data passed: room_name:to_join, username:curr_user,  user_id:socketio.id,password:check_pw
+      //data passed: room_name_to_join:data["room_name"],curr_room_name: joined_room_name, username:curr_user,  user_id:socketio.id,password:check_pw
       socket.on('join_room', function(data) {
-        let check_room = data["room_name"];
+        let check_room = data["room_name_to_join"];
         let joining_user = data["username"];
         let is_creator = false;
         let user_id = data["user_id"];
         let room_num = -1;
         let creator_name;
+        let curr_room_name = data["curr_room_name"];
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room){
                 if(rooms_lst[j].password !== data["password"]){
@@ -306,7 +307,7 @@ but also should "leave" the room if the user is joining one.
         let user_leaving = data["username"];
         let creator_name;
         let room_num;
-        let new_member_array;
+        let new_member_array=[];
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === room_to_leave){
                 room_num = j;
@@ -321,7 +322,7 @@ but also should "leave" the room if the user is joining one.
     }
     for (let j = 0 ; j < rooms_lst.length; j++){
         if(rooms_lst[j].room_name === room_to_leave){
-            rooms_lst[j]["members"] = new_member_array;
+            rooms_lst[j].members = new_member_array;
         }
     }
         console.log("room list after a member left",rooms_lst);
@@ -350,7 +351,7 @@ but also should "leave" the room if the user is joining one.
     }
     for (let j = 0 ; j < rooms_lst.length; j++){
         if(rooms_lst[j].room_name === room_to_leave){
-            rooms_lst[j]["members"] = new_member_array;
+            rooms_lst[j].members = new_member_array;
         }
     }
     for(let j=0; j<users_lst.length; j++) {
