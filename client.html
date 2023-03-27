@@ -381,7 +381,7 @@ function add_ban_function(){
 
   //DOM
   function show_curr_room(){
-      curr_room_name.innerHTML = `<div class="showRoomName">Room Name ==>  ${joined_room_name}</div>`;
+      curr_room_name.innerHTML = `<p class="showRoomName">Room Name:&nbsp${joined_room_name}</p>`;
   }
 
 
@@ -398,6 +398,7 @@ function add_ban_function(){
   //data passed: room_name:check_room_name, is_private:is_private,pw: true_pw
   socketio.on("check_room", function(data) {
     let check_pw ="";
+    console.log("this room private? ", data["is_private"]);
     if(data["is_private"]){
       check_pw = prompt("Please enter the password");
       

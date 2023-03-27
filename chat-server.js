@@ -249,19 +249,21 @@ but also should "leave" the room if the user is joining one.
       //check if the room is private or public
       socket.on('check_room', function(data) {
         let check_room_name = data["room_name"];
-        let is_private;
-        let true_pw="";
+        let is_private = false;
+        //let true_pw="";
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room_name){
-                if(rooms_lst[j].roomType === "public"){
+                console.log("line256:", rooms_lst[j].room_type);
+                if(rooms_lst[j].room_type === "public"){
                     is_private = false;
-                }else{
+                }else if(rooms_lst[j].room_type === "private"){
                     is_private = true;
-                    true_pw = rooms_lst[j].password;
+                    //true_pw = rooms_lst[j].password;
                 }
             }
         }
-        io.sockets.emit('check_room', {room_name:check_room_name, is_private:is_private,pw: true_pw});
+        console.log("room private?",is_private);
+        io.sockets.emit('check_room', {room_name:check_room_name, is_private:is_private});
       });
 
 
@@ -273,7 +275,6 @@ but also should "leave" the room if the user is joining one.
         let user_id = data["user_id"];
         let room_num = -1;
         let creator_name;
-        console.log(data["password"]);
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room){
                 if(rooms_lst[j].password !== data["password"]){
@@ -283,7 +284,6 @@ but also should "leave" the room if the user is joining one.
                 room_num = j;
                 creator_name =rooms_lst[j].creator;
                 if(rooms_lst[j].creator === joining_user){
-                    console.log("You are creator");
                     is_creator =true;
                     
                 }if(rooms_lst[j].banned.includes(joining_user)){

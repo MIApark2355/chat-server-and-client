@@ -108,7 +108,7 @@
 .middle{
     width: 78%;
     height: 95%;
-    display: block;
+    display:inline-block;
 }
 
 .chat_box{
@@ -123,11 +123,9 @@
 	overflow-y: scroll;
 }
 .chat_box .curr_room{
-    display: inline;
     width: 100%;
-    top: 30px;
-    height:10%;
-    background-color: rgb(244, 255, 223);
+    height:15%;
+    background-color: rgba(255, 157, 0, 0.692);
     border-radius: 10px;
     text-align: middle;
     padding: 5px 5px;
@@ -135,12 +133,14 @@
 
 .chat_box .curr_room .showRoomName{
     width: 100%;
-    font-family:fantasy;
+    font-size: 30px;
+    font-family:fantasy cursive;
     border-radius: 10px;
     color:rgb(54, 0, 154);
-    padding-left: 330px;
+    padding-top: 10px;
+    padding-left: 60px;
     text-align: middle;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .chat_log .message {
 	padding: 10px;
