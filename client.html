@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tilt+Warp&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <title>Chat Room</title>
@@ -51,7 +54,20 @@
               </div>
             </div>
               <div class="message_input_container after_join">
-                <input type="text" class="message_input" id="message_input"/>
+                <div class="left_form">
+                  <form>
+                    <div class="receivers_container">
+                      <select name="receivers" id="receivers">
+                      <option value=${users_lst} selected="selected">ALL</option>
+                      <option value=${users_lst}>user1</option>
+                      <option value=${users_lst}>user2</option>
+                    </select></div>
+                    
+                    <input type="text" class="message_input" id="message_input"/>
+                  </form>
+                </div>
+                
+                
               <button class ="send_btn" id ="send_btn">send</button>
               </div>
                 
@@ -264,8 +280,9 @@ function add_ban_function(){
   socketio.on("ban_user", function(data) {
     console.log(data["user_banned"]," is banned!");
     if(curr_user === data["user_banned"]){
-      alert("You are banned from joining the chat room");
+      alert("You are banned from joining the chat room,"+data["room_name"]+"!");
       setLeaveRoom();
+      socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
       update_data(data);
     }
@@ -324,9 +341,10 @@ function add_ban_function(){
           socketio.emit("create_room", {room_name:room_name, creator:curr_user,  creator_id:socketio.id,room_type:roomType,password: roomPW});
         }
         document.getElementById('new_room').value="";
+        document.getElementById('private_pw').value="";
         $("#public").prop("checked", false);
         $("#private").prop("checked", false);
-        console.log(roomType);
+        //console.log(roomType);
 
       //let creator = new User(curr_user, socketio.id);
       
@@ -363,21 +381,44 @@ function add_ban_function(){
 
   //DOM
   function show_curr_room(){
-      curr_room_name.innerText = "Room Name ==>  "+ joined_room_name;
+      curr_room_name.innerHTML = `<div class="showRoomName">Room Name ==>  ${joined_room_name}</div>`;
   }
 
 
-  function join_room(){
+  function check_room(){
     const to_join = document.getElementById("room_names").value;
-    console.log("trying to join ", to_join);
-    joined_room_name = to_join;
-    socketio.emit("join_room", {room_name:to_join, username:curr_user,  user_id:socketio.id});
+    socketio.emit("check_room", {room_name:to_join});
   }
-  join_btn.addEventListener("click", join_room, false);
+  join_btn.addEventListener("click", check_room, false);
 
   join_btn.addEventListener("click", e=>{
     e.preventDefault();
   }, false);
+
+  //data passed: room_name:check_room_name, is_private:is_private,pw: true_pw
+  socketio.on("check_room", function(data) {
+    let check_pw ="";
+    if(data["is_private"]){
+      check_pw = prompt("Please enter the password");
+      
+    }
+      socketio.emit("join_room", {room_name:data["room_name"], username:curr_user,  user_id:socketio.id,password:check_pw});
+
+    
+  });
+
+
+  // function join_room(){
+  //   const to_join = document.getElementById("room_names").value;
+  //   console.log("trying to join ", to_join);
+  //   joined_room_name = to_join;
+  //   socketio.emit("join_room", {room_name:to_join, username:curr_user,  user_id:socketio.id});
+  // }
+  // join_btn.addEventListener("click", join_room, false);
+
+  // join_btn.addEventListener("click", e=>{
+  //   e.preventDefault();
+  // }, false);
 
 
   socketio.on("join_room", function(data) {
@@ -392,7 +433,7 @@ function add_ban_function(){
       let str ="";
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
-      console.log(room["members"]);
+      //console.log(room["members"]);
       for(let j = 0; j<room["members"].length; j++) {
         if(data["creator_name"] === room["members"][j]){
           str += `<div class="user">
@@ -450,6 +491,7 @@ function add_ban_function(){
     console.log(data["user_leaving"]," left the room!");
     if(curr_user === data["user_leaving"]){
       setLeaveRoom();
+      
     }else{
       update_data(data);
     }
@@ -488,8 +530,9 @@ function add_kick_function(){
   socketio.on("kick_user", function(data) {
     console.log(data["user_kicked"]," is kicked out of this room!");
     if(curr_user === data["user_kicked"]){
-      alert("You are kicked out of the room!");
+      alert("You are kicked out of the room,"+data["room_name"]+"!");
       setLeaveRoom();
+      socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
       update_data(data);
     }

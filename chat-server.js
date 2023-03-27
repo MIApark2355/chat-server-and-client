@@ -124,7 +124,7 @@ io.sockets.on("connection", function (socket) {
     let creator_name;
     //updating banned container
     for (let j = 0 ; j < rooms_lst.length; j++){
-        if(rooms_lst[j].room_name === check_room){
+        if(rooms_lst[j].room_name === room_to_leave){
             room_num = j;
             creator_name =rooms_lst[j].creator;
             if(!rooms_lst[j].banned.includes(user_banned)){
@@ -159,8 +159,7 @@ io.sockets.on("connection", function (socket) {
       }
     }
     console.log("room list after ban ",rooms_lst);
-    io.in("room"+room_to_leave).emit('ban_user', {user_banned: user_banned, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
-    io.sockets.sockets[user_banned_id].leave("room"+room_to_leave);
+    io.in("room"+room_to_leave).emit('ban_user', {room_name:room_to_leave,user_banned: user_banned, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
   });
 /*This "logging out" is too complicated since we not only have to delete all the rooms that 'to_be_removed' have made and
 but also should "leave" the room if the user is joining one.
@@ -218,7 +217,7 @@ but also should "leave" the room if the user is joining one.
         }
 
         let roomType = data["room_type"];
-        let pw = null;
+        let pw = "";
         if(roomType === "private"){
             pw = data["password"];
         }
@@ -247,6 +246,26 @@ but also should "leave" the room if the user is joining one.
       });
 
 
+      //check if the room is private or public
+      socket.on('check_room', function(data) {
+        let check_room_name = data["room_name"];
+        let is_private;
+        let true_pw="";
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === check_room_name){
+                if(rooms_lst[j].roomType === "public"){
+                    is_private = false;
+                }else{
+                    is_private = true;
+                    true_pw = rooms_lst[j].password;
+                }
+            }
+        }
+        io.sockets.emit('check_room', {room_name:check_room_name, is_private:is_private,pw: true_pw});
+      });
+
+
+      //data passed: room_name:to_join, username:curr_user,  user_id:socketio.id,password:check_pw
       socket.on('join_room', function(data) {
         let check_room = data["room_name"];
         let joining_user = data["username"];
@@ -254,8 +273,13 @@ but also should "leave" the room if the user is joining one.
         let user_id = data["user_id"];
         let room_num = -1;
         let creator_name;
+        console.log(data["password"]);
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room){
+                if(rooms_lst[j].password !== data["password"]){
+                    io.in(user_id).emit("error", {message:"Password is wrong"});
+                        return;
+                }
                 room_num = j;
                 creator_name =rooms_lst[j].creator;
                 if(rooms_lst[j].creator === joining_user){
@@ -336,13 +360,18 @@ but also should "leave" the room if the user is joining one.
       }
     }
         console.log("room list after a member kicked our of room",rooms_lst);
-        io.in("room"+room_to_leave).emit('kick_user', {user_kicked: user_kicked, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
-        io.sockets.sockets[user_kicked_id].leave("room"+room_to_leave);
+        io.in("room"+room_to_leave).emit('kick_user', {room_name:room_to_leave,user_kicked: user_kicked, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
+
       });
 
+    socket.on('leave_room_socket',function(data){
+        let room_to_leave = data["room_name"];
+        socket.leave("room"+room_to_leave);
+    })
 
     //when a user disconnects
     socket.on('disconnect',()=>{
+        socket.leave(socket.room);
          io.emit('messgae',"A user has left the room");
      })
 

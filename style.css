@@ -113,22 +113,33 @@
 
 .chat_box{
     width: 95%;
-    display: block;
+    display: flex;
     margin-left: 1rem;
     margin-top: 1.5rem;
     height:80%;
     border: 0.2rem solid white;
     background-color: rgba(146, 224, 255, 0.634);
-    align-items: center;
-    padding: 30px;
+    padding: 20px;
 	overflow-y: scroll;
 }
-
-.chat_box h3{
+.chat_box .curr_room{
+    display: inline;
     width: 100%;
+    top: 30px;
+    height:10%;
+    background-color: rgb(244, 255, 223);
+    border-radius: 10px;
     text-align: middle;
-    justify-content: center;
-    align-items: center;
+    padding: 5px 5px;
+}
+
+.chat_box .curr_room .showRoomName{
+    width: 100%;
+    font-family:fantasy;
+    border-radius: 10px;
+    color:rgb(54, 0, 154);
+    padding-left: 330px;
+    text-align: middle;
     margin-bottom: 10px;
 }
 .chat_log .message {
@@ -149,17 +160,52 @@
 .chat_log .message .name_time span {
 	color: #777;
 }
-
-.message_input_container input{
-    padding-left: 5rem;
+.message_input_container {
+margin-left: 1rem;
+margin-top: 1rem;
+    width:95%;
+    display:flex;
+}
+.message_input_container .left_form{
     margin-left: 1rem;
-    margin-top: 2rem;
+    display: inline;
+}
+
+.receivers_container{
+    margin-bottom: 5px;
+
+}
+.receivers_container select{
+    background-color:  rgba(0, 51, 255, 0.195);
+    border:none;
+    border-radius: 10px;
+    margin-top: 5px;
     padding-right: 0.3rem;
-    width: 850px;
+    padding-left: 0.3rem;
+    margin-right: 0.3rem;
+    margin-left: 0.3rem;
+    width: 100px;
+    height: 30px;
+    cursor: pointer;
+}
+.message_input_container input{
+    padding-right: 0.3rem;
+    padding-left: 0.3rem;
+    border-color: rgba(0, 51, 255, 0.195);
+    width: 800px;
+    border-radius: 10px;
     height: 50px;
 }
 
 .message_input_container button{
+    background-color:  rgba(0, 51, 255, 0.195);
+    border:none;
+    border-radius: 10px;
+    margin-top: 40px;
+    padding-right: 0.3rem;
+    padding-left: 0.3rem;
+    margin-right: 0.3rem;
+    margin-left: 0.3rem;
     width: 50px;
     height: 50px;
     cursor: pointer;
