@@ -479,14 +479,14 @@ but also should "leave" the room if the user is joining one.
         let receiver = data["receiver"];
 
         let receiver_id = get_id(receiver);
-        console.log("received from client","message: " ,data["message"],"time: " , data["time"]);
+        console.log("RECEIVER: ",receiver,"/ message: " ,data["message"],"/ time: " , data["time"]);
 
         
        if(receiver ==="all"){
-        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
+        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:false}) // broadcast the message to other users
 
        }else{
-        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]});
+        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:true});
        }
     });
 });
