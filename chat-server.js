@@ -411,7 +411,6 @@ but also should "leave" the room if the user is joining one.
         for(j=0; j<rooms_lst.length ; j++){
             //console.log(rooms_lst[j].room_name);
             if(in_room(username_disconnect, rooms_lst[j].room_name)){
-
                 // if the creator is disconnecting the room will be gone
                 if (rooms_lst[j].creator === username_disconnect){
                         console.log("room list after removed",rooms_lst);

@@ -278,7 +278,7 @@ function add_ban_function(){
   socketio.on("ban_user", function(data) {
     console.log(data["user_banned"]," is banned!");
     if(curr_user === data["user_banned"]){
-      alert("You are banned from joining the chat room,"+data["room_name"]+"!");
+      alert("You are banned from joining the chat room, "+ data["room_name"]+"!");
       setLeaveRoom();
       socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
@@ -582,9 +582,9 @@ function add_kick_function(){
       if(mem_arr.includes(curr_user)){
         if(removed_rooms[i].room_name === joined_room_name){
           setLeaveRoom();
-          alert("Room no longer exists. The creator of the room,",removed_rooms[i].room_name,", is disconnected");
+          alert("Room no longer exists. The creator of the room,"+removed_rooms[i].room_name, + " is disconnected");
         }else{
-          alert(removed_rooms[i].room_name," room no longer exists.");
+          alert(removed_rooms[i].room_name +" room no longer exists.");
         }
       }
     }
@@ -602,6 +602,7 @@ function add_kick_function(){
   }
 
   //reset room options for every one
+  let str ="";
   for(let j = 0; j<data["rooms_lst"].length; j++) {
       str += `<option value=${data["rooms_lst"][j].room_name}>${data["rooms_lst"][j].room_name}</option>`;
     } 
@@ -660,7 +661,7 @@ function add_kick_function(){
     //showing without left users
     let show_users = document.getElementById("users_lst");
     let show_receivers = document.getElementById("receivers");
-      let str ="";s
+      let str ="";
       str+=`<div>Current Users</div>`;
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
