@@ -66,13 +66,18 @@ let users_lst = [];
 let rooms_lst = [];
 
 /////helper function//////
-function in_room(user_input , room_input){
+function in_room_or_creator(user_input , room_input){
     for(i=0;i<rooms_lst.length;i++){
         if(rooms_lst[i].room_name === room_input){
+            if(rooms_lst[i].creator===user_input){
+                return true;
+            }
+        }
+        else if(rooms_lst[i].room_name === room_input){
             if(rooms_lst[i].members.includes(user_input)){
                 return true;
             }
-    }
+        }
         
     }
     return false;
@@ -261,7 +266,7 @@ but also should "leave" the room if the user is joining one.
         new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
         console.log("rooms list updated after creating ",rooms_lst);
-        io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
+        io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst,username:data["creator"]});
       });
 
       
@@ -425,7 +430,7 @@ but also should "leave" the room if the user is joining one.
 
         for(j=0; j<rooms_lst.length ; j++){
             console.log("new_array: ",j,"th ",new_array);
-            if(in_room(username_disconnect, rooms_lst[j].room_name)){
+            if(in_room_or_creator(username_disconnect, rooms_lst[j].room_name)){
                 // if the creator is disconnecting the room will be gone
                 if (rooms_lst[j].creator === username_disconnect){
                         //console.log("room list after removed",rooms_lst);

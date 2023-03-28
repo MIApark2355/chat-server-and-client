@@ -355,6 +355,10 @@ function add_ban_function(){
     console.log("New Room Created => ", data);
     let str =`<option value=${data["room"].room_name}>${data["room"].room_name}</option>`
     show_room_lst.innerHTML += str;
+
+
+
+    
   });
 
   function remove_room(){
@@ -445,7 +449,7 @@ function add_ban_function(){
     let show_receivers = document.getElementById("receivers");
       let str ="";
       
-      str+=`<div>Current Users</div>`;
+      str+=`<div class="text">Current Users</div>`;
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
       //console.log(room["members"]);
@@ -478,9 +482,10 @@ function add_ban_function(){
 
       show_users.innerHTML = str;
       show_receivers.innerHTML = receivers;
+      show_curr_room();
       add_kick_function();
       add_ban_function();
-      show_curr_room();
+      
 
       if(data["creator_name"]===curr_user){
       is_creator = true;
@@ -495,13 +500,7 @@ function add_ban_function(){
       $(".leave_btn").show();
     }
     }
-    
-
-    
-
-    
-
-    
+        
     
   });
 
@@ -592,7 +591,7 @@ function add_kick_function(){
     }
 //let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
     for(i=0; i<leaving_rooms.length;i++){
-      let mem_arr = removed_rooms[i].members;
+      let mem_arr = leaving_rooms[i].members;
       if(mem_arr.includes(curr_user)){
         if(leaving_rooms[i].room_name === joined_room_name){
           let index;
@@ -680,7 +679,7 @@ function add_kick_function(){
     let show_users = document.getElementById("users_lst");
     let show_receivers = document.getElementById("receivers");
       let str ="";
-      str+=`<div>Current Users</div>`;
+      str+=`<div class="text">Current Users</div>`;
       let room_index = data["room_index"];
       let room = data.rooms_lst[room_index];
       console.log("updated after a user left",room["members"]);
@@ -716,6 +715,20 @@ function add_kick_function(){
       show_users.innerHTML = str;
       add_kick_function();
       add_ban_function();
+
+      if(data["creator_name"]===curr_user){
+      is_creator = true;
+      $(".two_btn").show();
+      $(".creator").show();
+      $(".is_creator").show();
+      $(".leave_btn").hide();
+      $(".delete_btn").show();
+    }else{
+      $(".two_btn").hide();
+      $(".delete_btn").hide();
+      $(".leave_btn").show();
+    }
+
   }
 
     //when there is an error
