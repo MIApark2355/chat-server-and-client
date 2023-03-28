@@ -22,7 +22,8 @@
         <div class="left">
           <div class="username_container">
             <div class="in">
-              <div class="showUser" id="showUser"><div class="creator">creator</div></div>
+              <div class="creator is_creator">creator</div>
+              <div class="showUser" id="showUser"></div>
               
             </div>
           <div class="out"><div class="username_input_container">
@@ -565,7 +566,7 @@ function add_kick_function(){
       setLeaveRoom();
       socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
-      let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
+      let pass_data = {creator: data["creator_name"],room_index:data["room_index"] ,rooms_lst:data["rooms_lst"]}
       update_data(pass_data);
     }
     
@@ -575,6 +576,7 @@ function add_kick_function(){
   socketio.on("update_after_disconnection", function(data){
     let removed_rooms = data["removed_rooms"];
     let leaving_rooms= data["leaving_rooms"];
+    let rooms_lst = data["rooms_lst"];
 
     //check if a room that a client has joined has been removed because a creator is disconnected
     for(i = 0; i<removed_rooms.length; i++){
@@ -589,13 +591,19 @@ function add_kick_function(){
       }
     }
 //let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
-    for(j=0; j<leaving_rooms.length;j++){
+    for(i=0; i<leaving_rooms.length;i++){
       let mem_arr = removed_rooms[i].members;
       if(mem_arr.includes(curr_user)){
         if(leaving_rooms[i].room_name === joined_room_name){
-          let index = data["rooms_lst"].indexOf(leaving_rooms[i]);
+          let index;
+          for(j = 0; j<rooms_lst.length;j++){
+            if(rooms_lst[j].room_name === joined_room_name){
+              index = j;
+              break;
+            }
+          }
           console.log("leaving_rooms index," , index);
-          let pass_data = {creator: leaving_rooms[i].creator,room_index:index}
+          let pass_data = {creator: leaving_rooms[i].creator,room_index:index ,rooms_lst:rooms_lst}
           update_data(pass_data);
       }
     }
