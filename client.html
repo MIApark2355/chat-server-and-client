@@ -364,7 +364,7 @@ function add_ban_function(){
 
   socketio.on("remove_room", function(data) {
     
-    alert("Room, " + data["room_name"] + ",has been deleted by a creator")
+    alert("Room, " + data["room_name"] + ",has been removed")
     let str ="";
     
     //reset room options
@@ -421,10 +421,22 @@ function add_ban_function(){
 
 
   socketio.on("join_room", function(data) {
+
+    //if client is newly joining user
+    if(data["username"] ===curr_user){
+      //reset chat log of newly joining user
+      let log ="";
+      document.getElementById("chat_log").innerHTML = log;
+      joined_room_name = data["room_name"];
+    }
+
+
     is_creator = false;
-    joined_room_name = data["room_name"];
-    console.log(data["username"]," joined the room!");
-    $(".after_join").show();
+    
+    //only affects users in "room_to_join"
+    if(data["room_name"] === joined_room_name){
+      $(".after_join").show();
+      console.log(data["username"]," joined the room!");
     
 
     //show all the users in the chat room on the left side
@@ -458,7 +470,7 @@ function add_ban_function(){
 
       let receivers = `<option value="all" selected="selected">ALL</option>`;
       for(let j = 0; j<room.members.length; j++) {
-        if(data["user_name"] !== room.members[j]){
+        if(curr_user !== room.members[j]){
           receivers += `<option value=${room.members[j]}>${room.members[j]}</option>`;
         }
       }
@@ -481,6 +493,14 @@ function add_ban_function(){
       $(".delete_btn").hide();
       $(".leave_btn").show();
     }
+    }
+    
+
+    
+
+    
+
+    
     
   });
 
@@ -545,9 +565,48 @@ function add_kick_function(){
       setLeaveRoom();
       socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
-      update_data(data);
+      let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
+      update_data(pass_data);
     }
     
+  });
+
+  //passed data: disconnect_username:username_disconnect , removed_rooms:removed_rooms, leaving_rooms:leaving_rooms
+  socketio.on("update_after_disconnection", function(data){
+    let removed_rooms = data["removed_rooms"];
+    let leaving_rooms= data["leaving_rooms"];
+
+    //check if a room that a client has joined has been removed because a creator is disconnected
+    for(i = 0; i<removed_rooms.length; i++){
+      let mem_arr = removed_rooms[i].members;
+      if(mem_arr.includes(curr_user)){
+        if(removed_rooms[i].room_name === joined_room_name){
+          setLeaveRoom();
+          alert("Room no longer exists. The creator of the room,",removed_rooms[i].room_name,", is disconnected");
+        }else{
+          alert(removed_rooms[i].room_name," room no longer exists.");
+        }
+      }
+    }
+//let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
+    for(j=0; j<leaving_rooms.length;j++){
+      let mem_arr = removed_rooms[i].members;
+      if(mem_arr.includes(curr_user)){
+        if(leaving_rooms[i].room_name === joined_room_name){
+          let index = data["rooms_lst"].indexOf(leaving_rooms[i]);
+          console.log("leaving_rooms index," , index);
+          let pass_data = {creator: leaving_rooms[i].creator,room_index:index}
+          update_data(pass_data);
+      }
+    }
+  }
+
+  //reset room options for every one
+  for(let j = 0; j<data["rooms_lst"].length; j++) {
+      str += `<option value=${data["rooms_lst"][j].room_name}>${data["rooms_lst"][j].room_name}</option>`;
+    } 
+    show_room_lst.innerHTML = str;
+
   });
 
 ///////////////////////MESSAGE STUFF///////////////////////////
@@ -629,7 +688,7 @@ function add_kick_function(){
 
       let receivers = `<option value="all" selected="selected">ALL</option>`;
       for(let j = 0; j<room.members.length; j++) {
-        if(data["user_name"] !== room.members[j]){
+        if(curr_user !== room.members[j]){
           receivers += `<option value=${room.members[j]}>${room.members[j]}</option>`;
         }
       }

@@ -58,18 +58,9 @@ constructor(room_name, creator, room_type, password) {
     this.password = password;
     this.members = [];
     this.banned = [];
-    this.messages = [];
 } 
 }
 
-//[messages]
-class Message{
-    constructor(msg_id, room_id, text) {
-        this.msg_id = msg_id;
-        this.room_id = room_id;
-        this.text = text;
-}
-}
 
 let users_lst = [];
 let rooms_lst = [];
@@ -414,6 +405,8 @@ but also should "leave" the room if the user is joining one.
         
         const username_disconnect = get_username(socket.id);
 
+        let removed_rooms = [];
+        let leaving_rooms = [];
 
         for(j=0; j<rooms_lst.length ; j++){
             //console.log(rooms_lst[j].room_name);
@@ -421,15 +414,17 @@ but also should "leave" the room if the user is joining one.
 
                 // if the creator is disconnecting the room will be gone
                 if (rooms_lst[j].creator === username_disconnect){
-                        rooms_lst.splice(j,1);
                         console.log("room list after removed",rooms_lst);
-                        io.sockets.emit('remove_room', {rooms_lst:rooms_lst, room_name:rooms_lst[j].room_name,room:rooms_lst[j]});
+                        removed_rooms.push(rooms_lst[j]);
+                        rooms_lst.splice(j,1);
                 }else{
                     for(let i = 0 ; i <  rooms_lst[j].members.length ;i++){
 
                         if(rooms_lst[j].members[i] === username_disconnect){
                             socket.leave("room"+rooms_lst[j].room_name);
-                            io.in("room"+rooms_lst[j].room_name).emit('leave_room', {user_leaving: username_disconnect, creator_name:rooms_lst[j].creator, users_lst:users_lst, rooms_lst:rooms_lst, room_index:j});
+                            leaving_rooms.push(rooms_lst[j]);
+                            //let c = rooms_lst[j].creator;
+                            //io.in("room"+rooms_lst[j].room_name).emit('leave_room', {user_leaving: username_disconnect, creator_name:c, users_lst:users_lst, rooms_lst:rooms_lst, room_index:j});
                             rooms_lst[j].members.splice(i,1);
                         }
                     }
@@ -438,21 +433,20 @@ but also should "leave" the room if the user is joining one.
             }
             
         }
-            
-        let r_creator;
-        //delete from users_lst
-
+           //delete from users_lst
         for(i=0; i<users_lst.length; i++){
 			if(users_lst[i].username === username_disconnect){
 				users_lst.splice(i,1);
                 break;
 			}
         }
-
-        //**should broadcast to other users ==> update userlist*/
-        console.log(username_disconnect," disconnected");
-        console.log("USERS LIST after one disconnected", users_lst);
-        console.log("ROOMS LIST after one disconnected", rooms_lst);
+         //**should broadcast to other users ==> update userlist*/
+         console.log(username_disconnect," disconnected");
+         console.log("USERS LIST after one disconnected", users_lst);
+         console.log("ROOMS LIST after one disconnected", rooms_lst);
+        io.sockets.emit('update_after_disconnection', {users_lst:users_lst, rooms_lst:rooms_lst,disconnect_username:username_disconnect , removed_rooms:removed_rooms, leaving_rooms:leaving_rooms});
+     
+       
      });
 
 

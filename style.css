@@ -108,12 +108,12 @@
 .middle{
     width: 78%;
     height: 95%;
-    display:inline-block;
+    display:block;
 }
 
 .chat_box{
     width: 95%;
-    display: flex;
+    display: block;
     margin-left: 1rem;
     margin-top: 1.5rem;
     height:80%;
