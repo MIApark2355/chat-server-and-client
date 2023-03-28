@@ -74,6 +74,37 @@ class Message{
 let users_lst = [];
 let rooms_lst = [];
 
+/////helper function//////
+function in_room(user_input , room_input){
+    for(i=0;i<rooms_lst.length;i++){
+        if(rooms_lst[i].room_name === room_input){
+            if(rooms_lst[i].members.includes(user_input)){
+                return true;
+            }
+    }
+        
+    }
+    return false;
+}
+
+
+function get_username(user_id_input){
+    for(i = 0; i<users_lst.length ; i++){
+        if(users_lst[i].user_id === user_id_input){
+            return users_lst[i].username;
+        }
+    }
+    return "";
+}
+
+function get_user(username){
+    for(u in users_lst){
+        if(u.username === username){
+            return u;
+        }
+    }
+    return null;
+}
 
 
 io.sockets.on("connection", function (socket) {
@@ -82,10 +113,13 @@ io.sockets.on("connection", function (socket) {
     //console.log("connected");
     //received new user
   socket.on('new_user', function(data) {
-
+   
     console.log("new_user information received from client ",data);
     //check if a new username is available
     let check_username = data["username"];
+
+    socket.user = check_username;
+
     let check_user_id = data["user_id"];
     if(check_username === ""){
         io.in(check_user_id).emit("error", {message:"Username cannot be empty string"});
@@ -370,11 +404,57 @@ but also should "leave" the room if the user is joining one.
         socket.leave("room"+room_to_leave);
     })
 
-    //when a user disconnects
+    //when a user disconnects 
+    //leaving socket rooms
+    //delete from rooms_lst
     socket.on('disconnect',()=>{
-        socket.leave(socket.room);
-         io.emit('messgae',"A user has left the room");
-     })
+        console.log(socket.id);
+
+        //console.log(socket.room);
+        
+        const username_disconnect = get_username(socket.id);
+
+
+        for(j=0; j<rooms_lst.length ; j++){
+            //console.log(rooms_lst[j].room_name);
+            if(in_room(username_disconnect, rooms_lst[j].room_name)){
+
+                // if the creator is disconnecting the room will be gone
+                if (rooms_lst[j].creator === username_disconnect){
+                        rooms_lst.splice(j,1);
+                        console.log("room list after removed",rooms_lst);
+                        io.sockets.emit('remove_room', {rooms_lst:rooms_lst, room_name:rooms_lst[j].room_name,room:rooms_lst[j]});
+                }else{
+                    for(let i = 0 ; i <  rooms_lst[j].members.length ;i++){
+
+                        if(rooms_lst[j].members[i] === username_disconnect){
+                            socket.leave("room"+rooms_lst[j].room_name);
+                            io.in("room"+rooms_lst[j].room_name).emit('leave_room', {user_leaving: username_disconnect, creator_name:rooms_lst[j].creator, users_lst:users_lst, rooms_lst:rooms_lst, room_index:j});
+                            rooms_lst[j].members.splice(i,1);
+                        }
+                    }
+                }
+                
+            }
+            
+        }
+            
+        let r_creator;
+        //delete from users_lst
+
+        for(i=0; i<users_lst.length; i++){
+			if(users_lst[i].username === username_disconnect){
+				users_lst.splice(i,1);
+                break;
+			}
+        }
+
+        //**should broadcast to other users ==> update userlist*/
+        console.log(username_disconnect," disconnected");
+        console.log("USERS LIST after one disconnected", users_lst);
+        console.log("ROOMS LIST after one disconnected", rooms_lst);
+     });
+
 
     socket.on('message', function (data) {
         // This callback runs when the server receives a new message from the client.
