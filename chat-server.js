@@ -408,6 +408,8 @@ but also should "leave" the room if the user is joining one.
         let removed_rooms = [];
         let leaving_rooms = [];
 
+        let new_array = [];
+
         for(j=0; j<rooms_lst.length ; j++){
             //console.log(rooms_lst[j].room_name);
             if(in_room(username_disconnect, rooms_lst[j].room_name)){
@@ -415,7 +417,7 @@ but also should "leave" the room if the user is joining one.
                 if (rooms_lst[j].creator === username_disconnect){
                         console.log("room list after removed",rooms_lst);
                         removed_rooms.push(rooms_lst[j]);
-                        rooms_lst.splice(j,1);
+                        //rooms_lst.splice(j,1);
                 }else{
                     for(let i = 0 ; i <  rooms_lst[j].members.length ;i++){
 
@@ -425,13 +427,19 @@ but also should "leave" the room if the user is joining one.
                             //let c = rooms_lst[j].creator;
                             //io.in("room"+rooms_lst[j].room_name).emit('leave_room', {user_leaving: username_disconnect, creator_name:c, users_lst:users_lst, rooms_lst:rooms_lst, room_index:j});
                             rooms_lst[j].members.splice(i,1);
+                            new_array.push(rooms_lst[j]);
                         }
                     }
                 }
                 
+            }else{
+                new_array.push(rooms_lst[j]);
             }
             
         }
+
+        //replace data
+        rooms_lst = new_array;
            //delete from users_lst
         for(i=0; i<users_lst.length; i++){
 			if(users_lst[i].username === username_disconnect){
