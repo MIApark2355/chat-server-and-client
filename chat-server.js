@@ -263,7 +263,6 @@ but also should "leave" the room if the user is joining one.
         }
         let new_room = new Room(check_name, data["creator"], roomType, pw);
         //new_room.members.push(data["creator"]);
-        new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
         console.log("rooms list updated after creating ",rooms_lst);
         io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst,username:data["creator"]});
