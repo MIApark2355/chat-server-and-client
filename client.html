@@ -566,7 +566,7 @@ function add_kick_function(){
       setLeaveRoom();
       socketio.emit("leave_room_socket",{room_name:data["room_name"]});
     }else{
-      let pass_data = {creator: data["creator_name"],room_index:data["room_index"] ,rooms_lst:data["rooms_lst"]}
+      let pass_data = {creator_name: data["creator_name"],room_index:data["room_index"] ,rooms_lst:data["rooms_lst"]}
       update_data(pass_data);
     }
     
@@ -584,7 +584,7 @@ function add_kick_function(){
       if(mem_arr.includes(curr_user)){
         if(removed_rooms[i].room_name === joined_room_name){
           setLeaveRoom();
-          alert("Room no longer exists. The creator of the room,"+removed_rooms[i].room_name, + " is disconnected");
+          alert("Room no longer exists. The creator of the room," + removed_rooms[i].room_name + ", is disconnected");
         }else{
           alert(removed_rooms[i].room_name +" room no longer exists.");
         }
@@ -603,7 +603,7 @@ function add_kick_function(){
             }
           }
           console.log("leaving_rooms index," , index);
-          let pass_data = {creator: leaving_rooms[i].creator,room_index:index ,rooms_lst:rooms_lst}
+          let pass_data = {creator_name: leaving_rooms[i].creator,room_index:index ,rooms_lst:rooms_lst}
           update_data(pass_data);
       }
     }
@@ -646,6 +646,8 @@ function add_kick_function(){
 
   //emit is to send something to server
   function send_message(e){
+    const to_send = document.getElementById("receivers").value;
+
       let msg = document.getElementById("message_input").value;
 
       //seding current time
@@ -653,12 +655,16 @@ function add_kick_function(){
       let time = today.getHours() + ":" + today.getMinutes();
 
       //console.log(msg);
-      socketio.emit("message", {room_name:joined_room_name,message:msg,username:curr_user,time:time});
+      socketio.emit("message", {room_name:joined_room_name,message:msg,username:curr_user,time:time, receiver:to_send});
 
       //clearing message text box
       document.getElementById("message_input").value="";
   }
   send_msg.addEventListener("click", send_message, false); 
+
+  send_msg.addEventListener("click", e=>{
+    e.preventDefault();
+  }, false);
 
 
 /////////////////////////HELPER FUNCTIONS///////////////////////////

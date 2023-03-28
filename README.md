@@ -7,7 +7,8 @@
 2. I think we should make a seperate button for switching room. Switch options will contain rooms that 
 a user already joined, while join options will only contain rooms that a user has not joined or left.
 
-3. creative portion idea:
+3. creator will be automatically join a room that they just made
+4. creative portion idea:
 - showing all the users list(online)
 - creator can hand over 'creator' authority
 

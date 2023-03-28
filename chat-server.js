@@ -78,6 +78,16 @@ function in_room(user_input , room_input){
     return false;
 }
 
+function get_id(username_input){
+    for(i = 0; i<users_lst.length ; i++){
+        if(users_lst[i].username === username_input){
+            return users_lst[i].user_id;
+        }
+    }
+    return "";
+}
+
+
 
 function get_username(user_id_input){
     for(i = 0; i<users_lst.length ; i++){
@@ -101,7 +111,7 @@ function get_user(username){
 io.sockets.on("connection", function (socket) {
 
     //////////////////////USERS STUFF////////////////////////
-    //console.log("connected");
+    console.log("connected");
     //received new user
   socket.on('new_user', function(data) {
    
@@ -248,6 +258,7 @@ but also should "leave" the room if the user is joining one.
         }
         let new_room = new Room(check_name, data["creator"], roomType, pw);
         //new_room.members.push(data["creator"]);
+        new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
         console.log("rooms list updated after creating ",rooms_lst);
         io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
@@ -316,6 +327,8 @@ but also should "leave" the room if the user is joining one.
                     io.in(user_id).emit("error", {message:"You are not allowed to join this chat room!"});
                         return;
                 }
+
+                //to avoid showing user's name several time when they switch among several rooms
                 if(!rooms_lst[j].members.includes(joining_user)){
                     rooms_lst[j].members.push(joining_user);
                 }
@@ -411,11 +424,13 @@ but also should "leave" the room if the user is joining one.
         let new_array = [];
 
         for(j=0; j<rooms_lst.length ; j++){
+            console.log("new_array: ",j,"th ",new_array);
             if(in_room(username_disconnect, rooms_lst[j].room_name)){
                 // if the creator is disconnecting the room will be gone
                 if (rooms_lst[j].creator === username_disconnect){
-                        console.log("room list after removed",rooms_lst);
+                        //console.log("room list after removed",rooms_lst);
                         removed_rooms.push(rooms_lst[j]);
+                        console.log("removed rooms", j,"th ",removed_rooms);
                         //rooms_lst.splice(j,1);
                 }else{
                     for(let i = 0 ; i <  rooms_lst[j].members.length ;i++){
@@ -427,6 +442,7 @@ but also should "leave" the room if the user is joining one.
                             //io.in("room"+rooms_lst[j].room_name).emit('leave_room', {user_leaving: username_disconnect, creator_name:c, users_lst:users_lst, rooms_lst:rooms_lst, room_index:j});
                             rooms_lst[j].members.splice(i,1);
                             new_array.push(rooms_lst[j]);
+                            break;
                         }
                     }
                 }
@@ -450,6 +466,8 @@ but also should "leave" the room if the user is joining one.
          console.log(username_disconnect," disconnected");
          console.log("USERS LIST after one disconnected", users_lst);
          console.log("ROOMS LIST after one disconnected", rooms_lst);
+         console.log("removed rooms", removed_rooms);
+         console.log("left rooms", leaving_rooms);
         io.sockets.emit('update_after_disconnection', {users_lst:users_lst, rooms_lst:rooms_lst,disconnect_username:username_disconnect , removed_rooms:removed_rooms, leaving_rooms:leaving_rooms});
      
        
@@ -458,15 +476,17 @@ but also should "leave" the room if the user is joining one.
 
     socket.on('message', function (data) {
         // This callback runs when the server receives a new message from the client.
+        let receiver = data["receiver"];
 
-        console.log("received from client");
-        console.log("message: " + data["message"]); // log it to the Node.JS output
-        console.log("time: " + data["time"]);
+        let receiver_id = get_id(receiver);
+        console.log("received from client","message: " ,data["message"],"time: " , data["time"]);
+
         
-       
-        //sending it down to all the clients
-        //cf. io.emit==> could print the message twice
+       if(receiver ==="all"){
         io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
-        //(=)socket.broadcast.emit("message_to_client", { message: data["message"] })
+
+       }else{
+        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]});
+       }
     });
 });
