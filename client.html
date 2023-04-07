@@ -497,11 +497,8 @@ function add_ban_function(){
 
       show_users.innerHTML = str;
       show_receivers.innerHTML = receivers;
-<<<<<<< HEAD
       show_transfer.innerHTML = transfer;
 
-=======
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
       show_curr_room();
       add_kick_function();
       add_ban_function();
@@ -524,10 +521,6 @@ function add_ban_function(){
             $(".leave_btn").show();
         }
     }
-<<<<<<< HEAD
-=======
-    }
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
         
     
   });
@@ -598,65 +591,13 @@ function add_kick_function(){
     
   });
 
-<<<<<<< HEAD
   
-=======
-  //passed data: disconnect_username:username_disconnect , removed_rooms:removed_rooms, leaving_rooms:leaving_rooms
-  socketio.on("update_after_disconnection", function(data){
-    let removed_rooms = data["removed_rooms"];
-    let leaving_rooms= data["leaving_rooms"];
-    let rooms_lst = data["rooms_lst"];
-
-    //check if a room that a client has joined has been removed because a creator is disconnected
-    for(i = 0; i<removed_rooms.length; i++){
-      let mem_arr = removed_rooms[i].members;
-      if(mem_arr.includes(curr_user)){
-        if(removed_rooms[i].room_name === joined_room_name){
-          setLeaveRoom();
-          alert("Room no longer exists. The creator of the room <" + removed_rooms[i].room_name + "> is disconnected");
-        }else{
-          alert(removed_rooms[i].room_name +" room no longer exists.");
-        }
-      }
-    }
-//let pass_data = {creator: data["creator_name"],room_index:data["room_index"]}
-    for(i=0; i<leaving_rooms.length;i++){
-      let mem_arr = leaving_rooms[i].members;
-      if(mem_arr.includes(curr_user)){
-        if(leaving_rooms[i].room_name === joined_room_name){
-          let index;
-          for(j = 0; j<rooms_lst.length;j++){
-            if(rooms_lst[j].room_name === joined_room_name){
-              index = j;
-              break;
-            }
-          }
-          console.log("leaving_rooms index," , index);
-          let pass_data = {creator_name: leaving_rooms[i].creator,room_index:index ,rooms_lst:rooms_lst}
-          update_data(pass_data);
-      }
-    }
-  }
-
-  //reset room options for every one
-  let str ="";
-  for(let j = 0; j<data["rooms_lst"].length; j++) {
-      str += `<option value=${data["rooms_lst"][j].room_name}>${data["rooms_lst"][j].room_name}</option>`;
-    } 
-    show_room_lst.innerHTML = str;
-
-  });
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
 
 ///////////////////////MESSAGE STUFF///////////////////////////
 
   //to show on HTML (DOM)
   function show_msg(data, is_dm){
-<<<<<<< HEAD
     const div = document.createElement('div');
-=======
-      const div = document.createElement('div');
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
       div.classList.add('message');
       const p = document.createElement('p');
       p.classList.add('name_time');
@@ -766,27 +707,18 @@ function add_kick_function(){
       $(".creator").show();
       $(".is_creator").show();
       $(".leave_btn").hide();
-<<<<<<< HEAD
       $(".leave_btn_creator").show(); // show option to change authority
     $(".transfer_container").show();
-=======
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
       $(".delete_btn").show();
     }else{
       $(".two_btn").hide();
       $(".delete_btn").hide();
-<<<<<<< HEAD
       $(".leave_btn_creator").hide();
       $(".transfer_container").hide();
       $(".leave_btn").show();
     }
 
 
-=======
-      $(".leave_btn").show();
-    }
-
->>>>>>> 83f79867a643a60de7b0251be2f10a15d5453a15
   }
 
   function update_creator(data){

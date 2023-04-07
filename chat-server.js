@@ -66,9 +66,12 @@ let users_lst = [];
 let rooms_lst = [];
 
 /////helper function//////
-function in_room(user_input , room_input){
+function in_room_or_creator(user_input, room_input){
     for(i=0;i<rooms_lst.length;i++){
         if(rooms_lst[i].room_name === room_input){
+            if(rooms_lst[i].creator===user_input){
+                return true;
+            }
             if(rooms_lst[i].members.includes(user_input)){
                 return true;
             }
@@ -485,14 +488,15 @@ but also should "leave" the room if the user is joining one.
         // This callback runs when the server receives a new message from the client.
         let receiver = data["receiver"];
         let receiver_id = get_id(receiver);
-        console.log("received from client","message: " ,data["message"],"time: " , data["time"]);
-
-        
-       if(receiver ==="all"){
-        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
-
+        console.log("RECEIVER: ",receiver,"/ message: " ,data["message"],"/ time: " , data["time"]);
+       
+        if(receiver ==="all"){
+            console.log("all");
+        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:false}) // broadcast the message to other users
        }else{
-        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]});
+        console.log("id");
+        console.log(receiver_id);
+        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:true});
        }
     });
 
