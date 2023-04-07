@@ -54,7 +54,7 @@ class Room{
 constructor(room_name, creator, room_type, password) {
     this.room_name = room_name;
     this.creator = creator;
-    this.room_type = room_type
+    this.room_type = room_type;
     this.password = password;
     this.members = [];
     this.banned = [];
@@ -66,13 +66,16 @@ let users_lst = [];
 let rooms_lst = [];
 
 /////helper function//////
-function in_room(user_input , room_input){
+function in_room_or_creator(user_input, room_input){
     for(i=0;i<rooms_lst.length;i++){
         if(rooms_lst[i].room_name === room_input){
+            if(rooms_lst[i].creator===user_input){
+                return true;
+            }
             if(rooms_lst[i].members.includes(user_input)){
                 return true;
             }
-    }
+        }
         
     }
     return false;
@@ -121,9 +124,9 @@ io.sockets.on("connection", function (socket) {
 
     socket.user = check_username;
 
-    let check_user_id = data["user_id"];
+    let check_user_id = socket.id;
     if(check_username === ""){
-        io.in(check_user_id).emit("error", {message:"Username cannot be empty string"});
+        io.in(check_user_id).emit("error1", {message:"Username cannot be empty string"});
         return;
     }
     let already_exist = false;
@@ -137,7 +140,7 @@ io.sockets.on("connection", function (socket) {
     console.log("new_user valid? ", !(already_exist));
     if(already_exist){
         //sending error to curr user
-        io.in(check_user_id).emit("error", {message:"The username is already taken"});
+        io.in(check_user_id).emit("error1", {message:"The username is already taken"});
         return;
     }
 
@@ -234,7 +237,7 @@ but also should "leave" the room if the user is joining one.
         let check_name = data["room_name"];
         let check_user_id = data["creator_id"]
         if(check_name === ""){
-            io.in(check_user_id).emit("error", {message:"room name cannot be empty string"});
+            io.in(check_user_id).emit("error1", {message:"room name cannot be empty string"});
             return;
         }
         let already_exist = false;
@@ -247,7 +250,7 @@ but also should "leave" the room if the user is joining one.
         console.log("new room name valid? ", !(already_exist));
         if(already_exist){
             //sending error to curr user
-            io.in(check_user_id).emit("error", {message:"The room name is already exists"});
+            io.in(check_user_id).emit("error1", {message:"The room name is already exists"});
             return;
         }
 
@@ -258,10 +261,9 @@ but also should "leave" the room if the user is joining one.
         }
         let new_room = new Room(check_name, data["creator"], roomType, pw);
         //new_room.members.push(data["creator"]);
-        new_room.members.push(data["creator"]);
         rooms_lst.push(new_room);
         console.log("rooms list updated after creating ",rooms_lst);
-        io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst});
+        io.sockets.emit('create_room',{room: new_room,rooms:rooms_lst,username:data["creator"]});
       });
 
       
@@ -306,6 +308,10 @@ but also should "leave" the room if the user is joining one.
       //data passed: room_name_to_join:data["room_name"],curr_room_name: joined_room_name, username:curr_user,  user_id:socketio.id,password:check_pw
       socket.on('join_room', function(data) {
         let check_room = data["room_name_to_join"];
+        if(check_room === ""){
+            io.in(user_id).emit("error1", {message:"No room has been created!"});
+            return;
+        }
         let joining_user = data["username"];
         let is_creator = false;
         let user_id = data["user_id"];
@@ -315,7 +321,7 @@ but also should "leave" the room if the user is joining one.
         for (let j = 0 ; j < rooms_lst.length; j++){
             if(rooms_lst[j].room_name === check_room){
                 if(rooms_lst[j].password !== data["password"]){
-                    io.in(user_id).emit("error", {message:"Password is wrong"});
+                    io.in(user_id).emit("error1", {message:"Password is wrong"});
                         return;
                 }
                 room_num = j;
@@ -324,7 +330,7 @@ but also should "leave" the room if the user is joining one.
                     is_creator =true;
                     
                 }if(rooms_lst[j].banned.includes(joining_user)){
-                    io.in(user_id).emit("error", {message:"You are not allowed to join this chat room!"});
+                    io.in(user_id).emit("error1", {message:"You are not allowed to join this chat room!"});
                         return;
                 }
 
@@ -356,13 +362,13 @@ but also should "leave" the room if the user is joining one.
         for(let i = 0 ; i < new_member_array.length ;i++){
             if(new_member_array[i] === user_leaving){
                 new_member_array.splice(i,1);
+            }
         }
-    }
-    for (let j = 0 ; j < rooms_lst.length; j++){
-        if(rooms_lst[j].room_name === room_to_leave){
-            rooms_lst[j].members = new_member_array;
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === room_to_leave){
+                rooms_lst[j].members = new_member_array;
+            }
         }
-    }
         console.log("room list after a member left",rooms_lst);
         io.in("room"+room_to_leave).emit('leave_room', {user_leaving: user_leaving, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
         socket.leave("room"+room_to_leave);
@@ -375,30 +381,30 @@ but also should "leave" the room if the user is joining one.
         let creator_name;
         let room_num;
         let new_member_array;
-        for (let j = 0 ; j < rooms_lst.length; j++){
+        for (let j = 0 ; j < rooms_lst.length; j++){ // find room number to execute
             if(rooms_lst[j].room_name === room_to_leave){
                 room_num = j;
                 creator_name = rooms_lst[j].creator;
                 new_member_array = rooms_lst[j].members;
             }
         }
-        for(let i = 0 ; i < new_member_array.length ;i++){
+        for(let i = 0 ; i < new_member_array.length ;i++){ // remove user from array
             if(new_member_array[i] === user_kicked){
                 new_member_array.splice(i,1);
+            }
         }
-    }
-    for (let j = 0 ; j < rooms_lst.length; j++){
-        if(rooms_lst[j].room_name === room_to_leave){
-            rooms_lst[j].members = new_member_array;
+        for (let j = 0 ; j < rooms_lst.length; j++){ // update current member array
+            if(rooms_lst[j].room_name === room_to_leave){
+                rooms_lst[j].members = new_member_array;
+            }
         }
-    }
-    for(let j=0; j<users_lst.length; j++) {
-      if(users_lst[j].username=== user_kicked) {
-        user_kicked_id =users_lst[j].user_id;
-        break;
-      }
-    }
-        console.log("room list after a member kicked our of room",rooms_lst);
+        for(let j=0; j<users_lst.length; j++) { // find kicked user's id
+            if(users_lst[j].username=== user_kicked) {
+                user_kicked_id =users_lst[j].user_id;
+                break;
+            }
+        }
+        console.log("room list after a member kicked out of room",rooms_lst);
         io.in("room"+room_to_leave).emit('kick_user', {room_name:room_to_leave,user_kicked: user_kicked, creator_name:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
 
       });
@@ -408,6 +414,10 @@ but also should "leave" the room if the user is joining one.
         socket.leave("room"+room_to_leave);
     })
 
+
+        ////////////////////CREATIVE PORTION/////////////////////
+
+        
     //when a user disconnects 
     //leaving socket rooms
     //delete from rooms_lst
@@ -425,7 +435,7 @@ but also should "leave" the room if the user is joining one.
 
         for(j=0; j<rooms_lst.length ; j++){
             console.log("new_array: ",j,"th ",new_array);
-            if(in_room(username_disconnect, rooms_lst[j].room_name)){
+            if(in_room_or_creator(username_disconnect, rooms_lst[j].room_name)){
                 // if the creator is disconnecting the room will be gone
                 if (rooms_lst[j].creator === username_disconnect){
                         //console.log("room list after removed",rooms_lst);
@@ -477,16 +487,48 @@ but also should "leave" the room if the user is joining one.
     socket.on('message', function (data) {
         // This callback runs when the server receives a new message from the client.
         let receiver = data["receiver"];
-
         let receiver_id = get_id(receiver);
-        console.log("received from client","message: " ,data["message"],"time: " , data["time"]);
-
-        
-       if(receiver ==="all"){
-        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]}) // broadcast the message to other users
-
+        console.log("RECEIVER: ",receiver,"/ message: " ,data["message"],"/ time: " , data["time"]);
+       
+        if(receiver ==="all"){
+            console.log("all");
+        io.in("room" + data["room_name"]).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:false}) // broadcast the message to other users
        }else{
-        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"]});
+        console.log("id");
+        console.log(receiver_id);
+        io.in(receiver_id).emit("message", { message: data["message"],username:data["username"] ,time:data["time"], dm:true});
        }
+    });
+
+
+
+    socket.on('transfer', function(data) {
+        let transfer_user = data["transfer"];
+        let room_to_transfer = data["room_name"];
+        let room_num = -1;
+        let creator_name = data["username"];
+        
+        //updating members container
+        let new_member_array;
+            for (let j = 0 ; j < rooms_lst.length; j++){
+                if(rooms_lst[j].room_name === room_to_transfer){
+                    room_num = j;
+                    rooms_lst[j].creator = transfer_user; // update creator to be target user
+                    new_member_array = rooms_lst[j].members;
+                }
+            }
+            for(let i = 0 ; i < new_member_array.length ;i++){
+                if(new_member_array[i] === creator_name){
+                    new_member_array.splice(i,1); // kick original creator out of the room
+            }
+        }
+        for (let j = 0 ; j < rooms_lst.length; j++){
+            if(rooms_lst[j].room_name === room_to_transfer){
+                rooms_lst[j].members = new_member_array;
+            }
+        }
+        
+        console.log("room list after transfer ",rooms_lst);
+        io.in("room"+room_to_transfer).emit('transfer', {room_name:room_to_transfer,transfer: transfer_user, prev_creator:creator_name, users_lst:users_lst, rooms_lst:rooms_lst, room_index:room_num});
     });
 });

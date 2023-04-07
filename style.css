@@ -33,7 +33,7 @@
 }
 
 .left{
-    color: yellow;
+
     border-left: 20px solid skyblue;
     border-top: 20px solid skyblue;
     width: 15%;
@@ -51,26 +51,36 @@
 }
 .showUser .actual_name{
     color: yellow;
+    font-size: 25px;
     text-decoration: double;
     text-align: center;
 }
 
-.showUser .creator {
+.creator {
     color: coral;
     border: 1px;
-    font-size: 10px;
+    padding-left: 10px;
+    font-size: 20px;
     text-align: center;
 }
 
 .users_lst{
     padding-top: 30px;
 }
+
+.users_lst .text{
+    color: coral;
+    font-size: 25px;
+    background-color: rgb(255, 250, 173);
+    text-decoration: wavy;
+}
+
 .username_input_container input{
     width: 120px;
 }
 
 .user{
-    color: coral;
+    color: yellow;
     font-family: fantasy;
     font-size: 15px;
 }
@@ -138,13 +148,14 @@
     border-radius: 10px;
     color:rgb(54, 0, 154);
     padding-top: 10px;
+    padding-bottom: 10px;
     padding-left: 60px;
     text-align: middle;
     margin-bottom: 8px;
 }
 .chat_log .message {
 	padding: 10px;
-	margin-bottom: 10px;
+	margin-top: 10px;
 	background-color: rgb(166, 178, 189);
 	border-radius: 5px;
 }
@@ -155,6 +166,11 @@
 	color: black;
 	opacity: 0.7;
 	margin-bottom: 7px;
+}
+.name_time .is_dm {
+    color: red;
+    font-size: 15px;
+    right: 5%;
 }
 
 .chat_log .message .name_time span {
